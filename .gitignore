@@ -59,6 +59,4 @@ Thumbs.db
 
 # Project specific
 *.log
-config.json
-
-/last_event.json
+.env

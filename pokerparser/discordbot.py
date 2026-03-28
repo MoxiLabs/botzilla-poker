@@ -12,6 +12,11 @@ from typing import List, cast, Union
 from .freerollpass import FreerollParser
 from .freeroll_password import FreeRollPasswordParser
 from .models import TournamentEvent
+from dotenv import load_dotenv
+from .logger import log, setup_logger, setup_discord_logging, logging
+
+# Load environment variables from .env file
+load_dotenv()
 
 # ------------------------------------------------------
 # CONFIG LOADING
@@ -31,6 +36,7 @@ def load_config():
                 with open(config_path, 'r', encoding='utf-8') as f:
                     return json.load(f)
             except Exception as e:
+                # We don't have logger initialized yet, so use print
                 print(f"Error loading config from {config_path}: {e}")
                 continue
     
@@ -44,25 +50,67 @@ def load_config():
 
 # Load configuration
 config = load_config()
-TOKEN = config.get("discord_token")
+
+# ------------------------------------------------------
+# LOGGING SETUP
+# ------------------------------------------------------
+log_cfg = config.get("logging", {})
+log_level_name = log_cfg.get("level", "INFO").upper()
+log_level = getattr(logging, log_level_name, logging.INFO)
+log_file = log_cfg.get("file", "botzilla.log")
+log_max_mb = log_cfg.get("max_mb", 5)
+log_backup_count = log_cfg.get("backup_count", 3)
+
+# Convert MB to Bytes for the rotating handler
+log_max_bytes = log_max_mb * 1024 * 1024
+
+# Initialize bot and discord library loggers
+setup_logger(
+    log_file=log_file, 
+    max_bytes=log_max_bytes, 
+    level=log_level, 
+    backup_count=log_backup_count
+)
+setup_discord_logging(
+    log_file=log_file, 
+    max_bytes=log_max_bytes, 
+    backup_count=log_backup_count
+)
+
+# Discord token from environment variable
+TOKEN = os.environ.get("DISCORD_TOKEN")
+
+# Target channel for automatic notifications
 CHANNEL_ID = config.get("channel_id")
 
+# Channels allowed for command interaction
+ALLOWED_CHANNEL_IDS = config.get("allowed_channel_ids", [])
+
 if not TOKEN:
-    print("ERROR: discord_token not found in config.json")
+    log.error("DISCORD_TOKEN not found in environment or .env file")
     sys.exit(1)
 
 if not CHANNEL_ID:
-    print("ERROR: channel_id not found in config.json")
+    log.error("channel_id not found in config.json")
     sys.exit(1)
 
-LAST_EVENT_FILE = "last_event.json"
+if not ALLOWED_CHANNEL_IDS:
+    log.warning("allowed_channel_ids not found or empty in config.json")
+    # Default to the main channel if not specified
+    ALLOWED_CHANNEL_IDS = [CHANNEL_ID]
+
+LAST_EVENT_FILE = config.get("last_event_file", "last_event.json")
 
 intents = discord.Intents.default()
 intents.message_content = True
 bot = discord.Client(intents=intents)
 
-URL_PASSWORD = "https://freeroll-password.com/"
-URL_PASS = "https://freerollpass.com/"
+URL_PASSWORD = config.get("url_password", "https://freeroll-password.com/")
+URL_PASS = config.get("url_pass", "https://freerollpass.com/")
+
+# Command settings
+COMMAND_PREFIX = config.get("command_prefix", "!")
+COMMAND_SUFFIX = config.get("command_suffix", "")
 
 # ------------------------------------------------------
 # DISCORD WRAPPER FOR DRY RUN
@@ -72,7 +120,7 @@ async def send_discord_message(target, content: str):
     dry_run = os.environ.get('DRY_RUN', '')
     
     if dry_run:  # Non-empty string means DRY_RUN mode
-        print(f"[DRY_RUN] Message to {target}: {content}")
+        log.info(f"[DRY_RUN] Message to {target}: {content}")
     else:
         await target.send(content)
 
@@ -158,7 +206,7 @@ def save_sent_events(events: List[dict]) -> None:
         with open(LAST_EVENT_FILE, 'w', encoding='utf-8') as f:
             json.dump(events, f, ensure_ascii=False, indent=2)
     except Exception as e:
-        print(f"Error saving sent events: {e}")
+        log.error(f"Error saving sent events: {e}")
 
 def event_already_sent(event: TournamentEvent, sent_events: List[dict]) -> bool:
     """Check if event was already sent (deep compare all fields)"""
@@ -286,20 +334,21 @@ async def send_help(message):
 # ------------------------------------------------------
 # STATUS ROTATOR (presence cycle)
 # ------------------------------------------------------
-STATUS_MESSAGES = cycle([
+STATUS_MESSAGES = cycle(config.get("status_messages", [
     "👹 Monitoring freerolls…",
     "🃏 Hunt is on…",
     "💰 Botzilla in active mode",
     "🧨 10-minute alerts ready",
     "♠️ New freeroll approaching…"
-])
+]))
 
 async def status_rotator():
     await bot.wait_until_ready()
+    sleep_seconds = config.get("status_rotator_sleep_seconds", 20)
     while not bot.is_closed():
         current_status = next(STATUS_MESSAGES)
         await bot.change_presence(activity=discord.Game(name=current_status))
-        await asyncio.sleep(20)
+        await asyncio.sleep(sleep_seconds)
 
 # ------------------------------------------------------
 # WATCHER – Daily summary and alerts
@@ -317,12 +366,12 @@ async def watcher():
     channel_obj = bot.get_channel(CHANNEL_ID)
     
     if channel_obj is None:
-        print(f"Error: Channel with ID {CHANNEL_ID} not found")
+        log.error(f"Channel with ID {CHANNEL_ID} not found")
         return
     
     # Type narrowing - ensure we have a text channel
     if not isinstance(channel_obj, (discord.TextChannel, discord.Thread)):
-        print(f"Error: Channel {CHANNEL_ID} is not a text channel or thread")
+        log.error(f"Channel {CHANNEL_ID} is not a text channel or thread")
         return
     
     channel = cast(Union[discord.TextChannel, discord.Thread], channel_obj)
@@ -372,45 +421,34 @@ async def watcher():
         next_24h_cutoff = now + timedelta(hours=24)
         next_24h_timed = [e for e in events if not e['is_all_day'] and now <= get_event_datetime(e) <= next_24h_cutoff]
         
-        role = None
-        if isinstance(channel, discord.TextChannel) and channel.guild:
-            role = discord.utils.get(channel.guild.roles, name="notif_poker")
-
+        # Get threshold values from config
+        thresholds = config.get("alert_thresholds", {"warning": 60, "urgent": 10})
+        warning_min = thresholds.get("warning", 60)
+        urgent_min = thresholds.get("urgent", 10)
+        
         for nxt in next_24h_timed:
             delta = get_event_datetime(nxt) - now
             total_minutes = int(delta.total_seconds() / 60)
 
-            # 1 hour alert (less than 60 minutes but more than 10 minutes)
-            if total_minutes < 60 and total_minutes > 10:
-                event_key = (get_event_datetime(nxt), nxt["name"], '1hour')
+            # Warning alert (e.g. 1 hour)
+            if total_minutes < warning_min and total_minutes > urgent_min:
+                event_key = (get_event_datetime(nxt), nxt["name"], 'warning')
                 if event_key not in SENT_ALERTS:
                     SENT_ALERTS.add(event_key)
-                    if role:
-                        await send_discord_message(
-                            channel,
-                            f"{role.mention} ⏰ **Starts in {total_minutes} minutes!**\n\n" + fmt(nxt)
-                        )
-                    else:
-                        await send_discord_message(
-                            channel,
-                            f"⏰ **Starts in {total_minutes} minutes!**\n\n" + fmt(nxt)
-                        )
+                    await send_discord_message(
+                        channel,
+                        f"⏰ **Starts in {total_minutes} minutes!**\n\n" + fmt(nxt)
+                    )
 
-            # 10 minute alert (less than 10 minutes and not yet sent)
-            if total_minutes < 10 and total_minutes >= 0:
-                event_key = (get_event_datetime(nxt), nxt["name"], '10min')
+            # Urgent alert (e.g. 10 minutes)
+            if total_minutes < urgent_min and total_minutes >= 0:
+                event_key = (get_event_datetime(nxt), nxt["name"], 'urgent')
                 if event_key not in SENT_ALERTS:
                     SENT_ALERTS.add(event_key)
-                    if role:
-                        await send_discord_message(
-                            channel,
-                            f"{role.mention} 🚨 **ATTENTION! Starts in {total_minutes} minutes!**\n\n" + fmt(nxt)
-                        )
-                    else:
-                        await send_discord_message(
-                            channel,
-                            f"🚨 **ATTENTION! Starts in {total_minutes} minutes!**\n\n" + fmt(nxt)
-                        )
+                    await send_discord_message(
+                        channel,
+                        f"🚨 **ATTENTION! Starts in {total_minutes} minutes!**\n\n" + fmt(nxt)
+                    )
 
         # Memory cleanup: remove expired events
         cutoff_time = now - timedelta(hours=2)
@@ -419,14 +457,15 @@ async def watcher():
             if dt > cutoff_time
         }
 
-        await asyncio.sleep(300)  # Wait 5 minutes
+        watcher_sleep = config.get("watcher_sleep_seconds", 300)
+        await asyncio.sleep(watcher_sleep)
 
 # ------------------------------------------------------
 # BOT EVENTS
 # ------------------------------------------------------
 @bot.event
 async def on_ready():
-    print("Bot online:", bot.user)
+    log.info(f"Bot online: {bot.user}")
 
     asyncio.create_task(status_rotator())
     asyncio.create_task(watcher())
@@ -437,20 +476,29 @@ async def on_message(message):
     if message.author == bot.user:
         return
 
-    msg = message.content.lower()
+    # Check if the channel is allowed for commands
+    if message.channel.id not in ALLOWED_CHANNEL_IDS:
+        return
 
-    if msg == "!day":
+    content = message.content.lower()
+
+    # Helper function to check for the command with its prefix and suffix
+    def is_cmd(cmd_name):
+        return content == f"{COMMAND_PREFIX}{cmd_name}{COMMAND_SUFFIX}".lower()
+
+    if is_cmd("day"):
         await send_today(message)
 
-    if msg == "!next":
+    if is_cmd("next"):
         await send_next(message)
 
-    if msg == "!test":
+    if is_cmd("test"):
         await send_test(message)
 
-    if msg == "!help":
+    if is_cmd("help"):
         await send_help(message)
 
 
 
-bot.run(TOKEN)
+if __name__ == "__main__":
+    bot.run(TOKEN)

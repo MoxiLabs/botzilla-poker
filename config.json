@@ -1,0 +1,31 @@
+{
+  "channel_id": 1441900656377073904,
+  "allowed_channel_ids": [
+    1486515344674787399,
+    1441900656377073904
+  ],
+  "last_event_file": "last_event.json",
+  "url_password": "https://freeroll-password.com/",
+  "url_pass": "https://freerollpass.com/",
+  "watcher_sleep_seconds": 300,
+  "status_rotator_sleep_seconds": 20,
+  "alert_thresholds": {
+    "warning": 60,
+    "urgent": 10
+  },
+  "command_prefix": "!",
+  "command_suffix": "_c",
+  "status_messages": [
+    "👹 Monitoring freerolls…",
+    "🃏 Hunt is on…",
+    "💰 Botzilla in active mode",
+    "🧨 10-minute alerts ready",
+    "♠️ New freeroll approaching…"
+  ],
+  "logging": {
+    "level": "INFO",
+    "file": "botzilla.log",
+    "max_mb": 5,
+    "backup_count": 3
+  }
+}

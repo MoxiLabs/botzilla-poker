@@ -8,15 +8,15 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Import and run the bot
-from pokerparser.discordbot import bot, TOKEN
+from pokerparser.discordbot import bot, TOKEN, log
 
 if __name__ == "__main__":
     try:
-        print("Starting Discord bot...", flush=True)
+        log.info("Starting Discord bot...")
         bot.run(TOKEN)
     except KeyboardInterrupt:
-        print("\nBot stopped by user.", flush=True)
+        log.info("Bot stopped by user.")
         sys.exit(0)
     except Exception as e:
-        print(f"Error starting bot: {e}", flush=True)
+        log.error(f"Error starting bot: {e}")
         sys.exit(1)
