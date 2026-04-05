@@ -147,14 +147,17 @@ COMMAND_SUFFIX = config.get("command_suffix", "")
 # ------------------------------------------------------
 # DISCORD WRAPPER FOR DRY RUN
 # ------------------------------------------------------
-async def send_discord_message(target, content: str):
+async def send_discord_message(target, content: str = None, embed: discord.Embed = None):
     """Send message to Discord or print to console based on DRY_RUN env variable"""
     dry_run = os.environ.get('DRY_RUN', '')
     
     if dry_run:  # Non-empty string means DRY_RUN mode
-        log.info(f"[DRY_RUN] Message to {target}: {content}")
+        msg = f"[DRY_RUN] Message to {target}: {content if content else ''}"
+        if embed:
+            msg += f" [Embed: {embed.title}]"
+        log.info(msg)
     else:
-        await target.send(content)
+        await target.send(content=content, embed=embed)
 
 # ------------------------------------------------------
 # SCRAPER – freeroll-password.com
@@ -292,7 +295,18 @@ def extract_prize_value(prize_str: str) -> int:
         pass
     return 0
 
-def fmt(e: TournamentEvent) -> str:
+ROOM_THUMBNAILS = {
+    "PokerStars": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/PokerStars_logo.svg/512px-PokerStars_logo.svg.png",
+    "888poker": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/888poker_logo.svg/512px-888poker_logo.svg.png",
+    "GGPoker": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/GGPoker_logo.svg/512px-GGPoker_logo.svg.png",
+    "PartyPoker": "https://upload.wikimedia.org/wikipedia/en/thumb/0/07/PartyPoker_Logo.svg/512px-PartyPoker_Logo.svg.png",
+    "WPT Global": "https://wptglobal.com/images/default-source/default-album/wpt-global-logo-horizontal.png",
+    "ACR Poker": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Americas_Cardroom_Logo.png/512px-Americas_Cardroom_Logo.png",
+    "YaPoker": "https://yapoker.com/wp-content/uploads/2018/02/yapoker-logo.png",
+    "JackPoker": "https://jackpoker.com/wp-content/uploads/2021/04/logo.png"
+}
+
+def create_event_embed(e: TournamentEvent, urgent=False) -> discord.Embed:
     source_emoji = "🌐" if e.get('source') == "freeroll-password.com" else "🎯"
     
     # Format time display
@@ -308,20 +322,35 @@ def fmt(e: TournamentEvent) -> str:
     prize_val = extract_prize_value(e['prize'])
     threshold = config.get("high_value_threshold", 500)
     
-    high_value_msg = ""
-    if prize_val >= threshold:
-        high_value_msg = t("fmt_high_value", prize=e['prize'])
-    
-    return (
-        high_value_msg +
-        t("fmt_name", name=e['name']) +
-        t("fmt_room", room=e['room']) +
-        t("fmt_prize", prize=e['prize']) +
-        t("fmt_start", time=time_display) +
-        t("fmt_password", password=e['password']) +
-        t("fmt_source", emoji=source_emoji, source=e.get('source', 'n/a')) +
-        "──────────────"
+    # Determine Color
+    embed_color = discord.Color.green()
+    if urgent:
+        embed_color = discord.Color.red()
+    elif prize_val >= threshold:
+        embed_color = discord.Color.gold()
+        
+    embed = discord.Embed(
+        title=f"💰 {e['name']}",
+        color=embed_color
     )
+    
+    embed.add_field(name=t("embed_room"), value=f"**{e['room']}**", inline=True)
+    embed.add_field(name=t("embed_prize"), value=f"**{e['prize']}**", inline=True)
+    embed.add_field(name=t("embed_start"), value=time_display, inline=False)
+    
+    password_text = f"`{e['password']}`" if e['password'] != "not required" else "❌"
+    embed.add_field(name=t("embed_password"), value=password_text, inline=True)
+    
+    source_text = f"{source_emoji} {e.get('source', 'n/a')}"
+    embed.add_field(name=t("embed_source"), value=source_text, inline=True)
+    
+    # Check for known poker room thumbnails
+    for room_key, thumb_url in ROOM_THUMBNAILS.items():
+        if room_key.lower() in e['room'].lower():
+            embed.set_thumbnail(url=thumb_url)
+            break
+            
+    return embed
 
 # ------------------------------------------------------
 # COMMANDS
@@ -340,9 +369,9 @@ async def send_today(message):
         await send_discord_message(message.channel, t("no_freerolls_24h"))
         return
 
-    await send_discord_message(message.channel, t("freerolls_next_24h"))
+    await send_discord_message(message.channel, content=t("freerolls_next_24h"))
     for e in next_24h:
-        await send_discord_message(message.channel, fmt(e))
+        await send_discord_message(message.channel, embed=create_event_embed(e))
 
 async def send_next(message):
     # Use globally stored events from the watcher
@@ -362,7 +391,7 @@ async def send_next(message):
     total_minutes = int(delta.total_seconds() / 60)
     
     time_msg = t("starts_in_minutes", min=total_minutes)
-    await send_discord_message(message.channel, t("next_freeroll") + time_msg + fmt(nxt))
+    await send_discord_message(message.channel, content=t("next_freeroll") + time_msg, embed=create_event_embed(nxt))
 
 
 async def send_debug(message):
@@ -453,12 +482,12 @@ async def watcher():
             
             # If we've already sent a daily summary today, send with "New daily event" title
             if has_sent_today:
-                await send_discord_message(channel, t("new_daily_event"))
+                await send_discord_message(channel, content=t("new_daily_event"))
             else:
-                await send_discord_message(channel, t("freerolls_next_24h"))
+                await send_discord_message(channel, content=t("freerolls_next_24h"))
             
             for e in new_events:
-                await send_discord_message(channel, fmt(e))
+                await send_discord_message(channel, embed=create_event_embed(e))
                 # Add to the sent events list
                 add_sent_event(e)
 
@@ -483,7 +512,8 @@ async def watcher():
                     SENT_ALERTS.add(event_key)
                     await send_discord_message(
                         channel,
-                        t("starts_in_minutes", min=total_minutes) + fmt(nxt)
+                        content=t("starts_in_minutes", min=total_minutes),
+                        embed=create_event_embed(nxt)
                     )
 
             # Urgent alert (e.g. 10 minutes)
@@ -493,7 +523,8 @@ async def watcher():
                     SENT_ALERTS.add(event_key)
                     await send_discord_message(
                         channel,
-                        t("urgent_starts_in_minutes", min=total_minutes) + fmt(nxt)
+                        content=t("urgent_starts_in_minutes", min=total_minutes),
+                        embed=create_event_embed(nxt, urgent=True)
                     )
 
         # Memory cleanup: remove expired events

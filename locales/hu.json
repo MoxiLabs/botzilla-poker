@@ -17,6 +17,11 @@
   "fmt_password": "🔑 Jelszó: `{password}`\n",
   "fmt_source": "{emoji} Forrás: {source}\n",
   "fmt_all_day": "**{date} (egész nap)**",
+  "embed_room": "🏢 Terem",
+  "embed_prize": "💵 Nyeremény",
+  "embed_start": "🕒 Kezdés",
+  "embed_password": "🔑 Jelszó",
+  "embed_source": "{emoji} Forrás",
   "status_messages": [
     "👹 Freerollok figyelése…",
     "🃏 Kezdődik a vadászat…",

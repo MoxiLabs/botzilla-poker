@@ -17,6 +17,11 @@
   "fmt_password": "🔑 Password: `{password}`\n",
   "fmt_source": "{emoji} Source: {source}\n",
   "fmt_all_day": "**{date} (all day)**",
+  "embed_room": "🏢 Room",
+  "embed_prize": "💵 Prize",
+  "embed_start": "🕒 Start",
+  "embed_password": "🔑 Password",
+  "embed_source": "{emoji} Source",
   "status_messages": [
     "👹 Monitoring freerolls…",
     "🃏 Hunt is on…",
