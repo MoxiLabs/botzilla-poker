@@ -295,16 +295,7 @@ def extract_prize_value(prize_str: str) -> int:
         pass
     return 0
 
-ROOM_THUMBNAILS = {
-    "PokerStars": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/PokerStars_logo.svg/512px-PokerStars_logo.svg.png",
-    "888poker": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/888poker_logo.svg/512px-888poker_logo.svg.png",
-    "GGPoker": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/GGPoker_logo.svg/512px-GGPoker_logo.svg.png",
-    "PartyPoker": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Partypoker_logo.png/512px-Partypoker_logo.png",
-    "WPT Global": "https://wptglobal.com/images/default-source/default-album/wpt-global-logo-horizontal.png",
-    "ACR Poker": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Americas_Cardroom_Logo.png/512px-Americas_Cardroom_Logo.png",
-    "YaPoker": "https://yapoker.com/wp-content/uploads/2018/02/yapoker-logo.png",
-    "JackPoker": "https://jackpoker.com/wp-content/uploads/2021/04/logo.png"
-}
+# No hardcoded thumbnails needed anymore, generated dynamically
 
 def create_event_embed(e: TournamentEvent, urgent=False) -> discord.Embed:
     source_emoji = "🌐" if e.get('source') == "freeroll-password.com" else "🎯"
@@ -343,12 +334,10 @@ def create_event_embed(e: TournamentEvent, urgent=False) -> discord.Embed:
     
     embed.add_field(name=t("embed_source", emoji=source_emoji), value=e.get('source', 'n/a'), inline=True)
     
-    # Check for known poker room thumbnails
+    # Dynamically generate room thumbnail URL
     room_clean = e['room'].lower().replace(' ', '')
-    for room_key, thumb_url in ROOM_THUMBNAILS.items():
-        if room_key.lower().replace(' ', '') in room_clean:
-            embed.set_thumbnail(url=thumb_url)
-            break
+    thumb_url = f"https://freerollpass.com/storage/app/media/logo/{room_clean}-x2.png"
+    embed.set_thumbnail(url=thumb_url)
             
     return embed
 
