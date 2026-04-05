@@ -2,7 +2,7 @@ import datetime as dt
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 from bs4 import BeautifulSoup
-import requests
+import aiohttp
 from typing import List, Dict, Optional
 from .models import TournamentEvent
 
@@ -13,14 +13,15 @@ class FreerollParser:
     def __init__(self, url: str = "https://freerollpass.com/"):
         self.url = url
 
-    def fetch_page(self) -> str:
+    async def fetch_page(self) -> str:
         """Fetch the HTML content from the URL"""
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
-        response = requests.get(self.url, headers=headers, timeout=30)
-        response.raise_for_status()
-        return response.text
+        async with aiohttp.ClientSession() as session:
+            async with session.get(self.url, headers=headers, timeout=30) as response:
+                response.raise_for_status()
+                return await response.text()
     
     def _calculate_timezone_offset(self, html_content: str) -> int:
         """Calculate timezone offset by comparing server time with current Budapest time"""
@@ -195,9 +196,9 @@ class FreerollParser:
         
         return None
     
-    def get_tournaments(self) -> List[TournamentEvent]:
+    async def get_tournaments(self) -> List[TournamentEvent]:
         """Fetch and parse all tournaments"""
-        html_content = self.fetch_page()
+        html_content = await self.fetch_page()
         tournaments = self.parse_freerolls(html_content)
         
         events: List[TournamentEvent] = []

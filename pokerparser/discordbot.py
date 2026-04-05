@@ -1,6 +1,6 @@
 import discord
 import asyncio
-import requests
+import aiohttp
 import re
 import json
 import os
@@ -167,11 +167,11 @@ async def send_discord_message(target, content: str = None, embed: discord.Embed
 # ------------------------------------------------------
 # SCRAPER – freeroll-password.com
 # ------------------------------------------------------
-def fetch_freerolls_password() -> List[TournamentEvent]:
+async def fetch_freerolls_password() -> List[TournamentEvent]:
     """Fetch freerolls from freeroll-password.com"""
     try:
         parser = FreeRollPasswordParser(url=URL_PASSWORD)
-        tournaments = parser.get_tournaments()
+        tournaments = await parser.get_tournaments()
         return tournaments if tournaments else []
     except:
         return []
@@ -180,11 +180,11 @@ def fetch_freerolls_password() -> List[TournamentEvent]:
 # ------------------------------------------------------
 # SCRAPER – freerollpass.com
 # ------------------------------------------------------
-def fetch_freerolls_pass() -> List[TournamentEvent]:
+async def fetch_freerolls_pass() -> List[TournamentEvent]:
     """Fetch freerolls from freerollpass.com"""
     try:
         parser = FreerollParser(url=URL_PASS)
-        tournaments = parser.get_tournaments()
+        tournaments = await parser.get_tournaments()
         return tournaments if tournaments else []
     except:
         return []
@@ -200,12 +200,21 @@ def get_event_datetime(event: TournamentEvent) -> datetime:
         return datetime.combine(event['date'], datetime.min.time())
     return datetime.combine(event['date'], event['time'])
 
-def fetch_freerolls() -> List[TournamentEvent]:
+async def fetch_freerolls() -> List[TournamentEvent]:
     """Fetch freerolls from all sources and combine them"""
     events: List[TournamentEvent] = []    # Fetch from both sources
-    events.extend(fetch_freerolls_password())
-    events.extend(fetch_freerolls_pass())
     
+    # Run both async fetchers concurrently
+    results = await asyncio.gather(
+        fetch_freerolls_password(),
+        fetch_freerolls_pass(),
+        return_exceptions=True
+    )
+    
+    for result in results:
+        if isinstance(result, list):
+            events.extend(result)
+            
     # Sort by date and time
     events.sort(key=lambda x: get_event_datetime(x))
     return events
@@ -302,7 +311,7 @@ def extract_prize_value(prize_str: str) -> int:
 
 # No hardcoded thumbnails needed anymore, generated dynamically and cached locally
 
-def create_event_embed(e: TournamentEvent, urgent=False) -> tuple[discord.Embed, Optional[discord.File]]:
+async def create_event_embed(e: TournamentEvent, urgent=False) -> tuple[discord.Embed, Optional[discord.File]]:
     source_emoji = "🌐" if e.get('source') == "freeroll-password.com" else "🎯"
     
     # Format time display
@@ -349,10 +358,12 @@ def create_event_embed(e: TournamentEvent, urgent=False) -> tuple[discord.Embed,
         os.makedirs(os.path.dirname(logo_path), exist_ok=True)
         dl_url = f"https://freerollpass.com/storage/app/media/logo/{logo_filename}"
         try:
-            resp = requests.get(dl_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}, timeout=5)
-            if resp.status_code == 200:
-                with open(logo_path, 'wb') as f:
-                    f.write(resp.content)
+            async with aiohttp.ClientSession() as session:
+                async with session.get(dl_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}, timeout=5) as resp:
+                    if resp.status == 200:
+                        content = await resp.read()
+                        with open(logo_path, 'wb') as f:
+                            f.write(content)
         except Exception as ex:
             log.debug(f"Failed to download logo for {room_clean}: {ex}")
 
@@ -369,7 +380,7 @@ def create_event_embed(e: TournamentEvent, urgent=False) -> tuple[discord.Embed,
 async def send_today(message):
     # Use globally stored events from the watcher
     global GLOBAL_EVENTS
-    events = GLOBAL_EVENTS if GLOBAL_EVENTS else fetch_freerolls()
+    events = GLOBAL_EVENTS if GLOBAL_EVENTS else await fetch_freerolls()
     now = datetime.now()
     
     # Events in the next 24 hours (now + 24 hours)
@@ -382,13 +393,13 @@ async def send_today(message):
 
     await send_discord_message(message.channel, content=t("freerolls_next_24h"))
     for e in next_24h:
-        emb, attach = create_event_embed(e)
+        emb, attach = await create_event_embed(e)
         await send_discord_message(message.channel, embed=emb, file=attach)
 
 async def send_next(message):
     # Use globally stored events from the watcher
     global GLOBAL_EVENTS
-    events = GLOBAL_EVENTS if GLOBAL_EVENTS else fetch_freerolls()
+    events = GLOBAL_EVENTS if GLOBAL_EVENTS else await fetch_freerolls()
     now = datetime.now()
     
     # Filter out all-day events and get future events
@@ -403,12 +414,12 @@ async def send_next(message):
     total_minutes = int(delta.total_seconds() / 60)
     
     time_msg = t("starts_in_minutes", min=total_minutes)
-    emb, attach = create_event_embed(nxt)
+    emb, attach = await create_event_embed(nxt)
     await send_discord_message(message.channel, content=t("next_freeroll") + time_msg, embed=emb, file=attach)
 
 
 async def send_debug(message):
-    events = fetch_freerolls()
+    events = await fetch_freerolls()
     await send_discord_message(message.channel, t("debug_freerolls_loaded", count=len(events)))
 
 
@@ -467,7 +478,7 @@ async def watcher():
     last_daily_send = None
 
     while True:
-        events = fetch_freerolls()
+        events = await fetch_freerolls()
         GLOBAL_EVENTS = events  # Store events globally
         now = datetime.now()
         today = now.date()
@@ -500,7 +511,7 @@ async def watcher():
                 await send_discord_message(channel, content=t("freerolls_next_24h"))
             
             for e in new_events:
-                emb, attach = create_event_embed(e)
+                emb, attach = await create_event_embed(e)
                 await send_discord_message(channel, embed=emb, file=attach)
                 # Add to the sent events list
                 add_sent_event(e)
@@ -524,7 +535,7 @@ async def watcher():
                 event_key = (get_event_datetime(nxt), nxt["name"], 'warning')
                 if event_key not in SENT_ALERTS:
                     SENT_ALERTS.add(event_key)
-                    emb, attach = create_event_embed(nxt)
+                    emb, attach = await create_event_embed(nxt)
                     await send_discord_message(
                         channel,
                         content=t("starts_in_minutes", min=total_minutes),
@@ -537,7 +548,7 @@ async def watcher():
                 event_key = (get_event_datetime(nxt), nxt["name"], 'urgent')
                 if event_key not in SENT_ALERTS:
                     SENT_ALERTS.add(event_key)
-                    emb, attach = create_event_embed(nxt, urgent=True)
+                    emb, attach = await create_event_embed(nxt, urgent=True)
                     await send_discord_message(
                         channel,
                         content=t("urgent_starts_in_minutes", min=total_minutes),
