@@ -15,6 +15,7 @@ from .freeroll_password import FreeRollPasswordParser
 from .models import TournamentEvent
 from dotenv import load_dotenv
 from .logger import log, setup_logger, setup_discord_logging, logging
+from .database import init_db, is_event_sent, add_sent_event, has_sent_today, cleanup_old_events
 
 # Load environment variables from .env file
 load_dotenv()
@@ -220,80 +221,6 @@ async def fetch_freerolls() -> List[TournamentEvent]:
     return events
 
 # ------------------------------------------------------
-# EVENT STORAGE HELPERS
-# ------------------------------------------------------
-def event_to_dict(event: TournamentEvent) -> dict:
-    """Convert TournamentEvent to dictionary for comparison/storage"""
-    return {
-        "date": event["date"].isoformat(),
-        "time": event["time"].isoformat() if event["time"] else None,
-        "is_all_day": event["is_all_day"],
-        "room": event["room"],
-        "name": event["name"],
-        "prize": event["prize"],
-        "password": event["password"],
-        "source": event.get("source", "n/a")
-    }
-
-def load_sent_events() -> List[dict]:
-    """Load all sent events from file"""
-    if not os.path.exists(LAST_EVENT_FILE):
-        return []
-    try:
-        with open(LAST_EVENT_FILE, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            # Handle old format (single event) and new format (list of events)
-            if isinstance(data, dict):
-                return [data]  # Convert old single event to list
-            return data if isinstance(data, list) else []
-    except:
-        return []
-
-def save_sent_events(events: List[dict]) -> None:
-    """Save all sent events to file"""
-    try:
-        with open(LAST_EVENT_FILE, 'w', encoding='utf-8') as f:
-            json.dump(events, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        log.error(f"Error saving sent events: {e}")
-
-def event_already_sent(event: TournamentEvent, sent_events: List[dict]) -> bool:
-    """Check if event was already sent (deep compare all fields)"""
-    event_data = event_to_dict(event)
-    for sent_event in sent_events:
-        if event_data == sent_event:
-            return True
-    return False
-
-def add_sent_event(event: TournamentEvent) -> None:
-    """Add event to sent events list"""
-    sent_events = load_sent_events()
-    event_data = event_to_dict(event)
-    
-    # Only add if not already in list
-    if not event_already_sent(event, sent_events):
-        sent_events.append(event_data)
-        save_sent_events(sent_events)
-
-def cleanup_old_events() -> None:
-    """Remove events older than today from sent events list"""
-    sent_events = load_sent_events()
-    today = datetime.now().date()
-    
-    # Keep only today's events
-    cleaned_events = []
-    for event_data in sent_events:
-        try:
-            event_date = datetime.fromisoformat(event_data["date"]).date()
-            if event_date >= today:
-                cleaned_events.append(event_data)
-        except:
-            # If can't parse date, skip this event
-            continue
-    
-    save_sent_events(cleaned_events)
-
-# ------------------------------------------------------
 # FORMATTER
 # ------------------------------------------------------
 def extract_prize_value(prize_str: str) -> int:
@@ -484,28 +411,19 @@ async def watcher():
         today = now.date()
 
         # Cleanup: remove events older than today
-        cleanup_old_events()
-        
-        # Load sent events
-        sent_events = load_sent_events()
+        await cleanup_old_events(today)
         
         # Events in the next 24 hours (now + 24 hours)
         next_24h_cutoff = now + timedelta(hours=24)
         next_24h = [e for e in events if now <= get_event_datetime(e) <= next_24h_cutoff]
         
-        # Only send events that haven't been sent yet (deep compare)
-        new_events = [e for e in next_24h if not event_already_sent(e, sent_events)]
+        new_events = []
+        for e in next_24h:
+            if not await is_event_sent(e):
+                new_events.append(e)
         
         if new_events:
-            # Check if we've already sent a daily summary today
-            # (is there an event with today's date in the sent list)
-            has_sent_today = any(
-                datetime.fromisoformat(sent["date"]).date() == today 
-                for sent in sent_events
-            )
-            
-            # If we've already sent a daily summary today, send with "New daily event" title
-            if has_sent_today:
+            if await has_sent_today(today):
                 await send_discord_message(channel, content=t("new_daily_event"))
             else:
                 await send_discord_message(channel, content=t("freerolls_next_24h"))
@@ -514,7 +432,7 @@ async def watcher():
                 emb, attach = await create_event_embed(e)
                 await send_discord_message(channel, embed=emb, file=attach)
                 # Add to the sent events list
-                add_sent_event(e)
+                await add_sent_event(e)
 
         # Future events for alerts
         # Filter out all-day events from alerts (1h and 10min warnings)
@@ -572,6 +490,9 @@ async def watcher():
 @bot.event
 async def on_ready():
     log.info(f"Bot online: {bot.user}")
+    
+    # Initialize SQLite database
+    await init_db()
 
     asyncio.create_task(status_rotator())
     asyncio.create_task(watcher())

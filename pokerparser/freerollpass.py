@@ -224,13 +224,10 @@ class FreerollParser:
                     except:
                         continue
 
-                # Create timezone-aware datetime with calculated offset
-                source_tz = timezone(timedelta(hours=tz_offset))
-                dt_aware = dt_naive.replace(tzinfo=source_tz)
-                
-                # Convert to Budapest time (handles CET/CEST automatically)
+                # The times on freerollpass.com are already in CET/CEST (Budapest time)
+                # Simply attach the Budapest timezone to the parsed naive datetime
                 budapest_tz = ZoneInfo("Europe/Budapest")
-                dt_budapest = dt_aware.astimezone(budapest_tz)
+                dt_budapest = dt_naive.replace(tzinfo=budapest_tz)
 
                 # Get password
                 password = tournament.get('password', 'n/a')

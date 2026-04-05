@@ -4,3 +4,4 @@ aiohttp>=3.9.0
 lxml>=4.9.0
 discord
 python-dotenv
+aiosqlite>=0.20.0
