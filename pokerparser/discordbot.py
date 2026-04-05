@@ -52,6 +52,37 @@ def load_config():
 config = load_config()
 
 # ------------------------------------------------------
+# LOCALIZATION
+# ------------------------------------------------------
+LOCALE = config.get("locale", "hu")
+
+def load_translations(locale="hu"):
+    paths = [
+        os.path.join(os.path.dirname(__file__), "..", "locales", f"{locale}.json"),
+        os.path.join(os.getcwd(), "locales", f"{locale}.json")
+    ]
+    for p in paths:
+        if os.path.exists(p):
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception as e:
+                print(f"Error loading {p}: {e}")
+    print(f"Warning: Locale file for '{locale}' not found.")
+    return {}
+
+TRANSLATIONS = load_translations(LOCALE)
+
+def t(key, **kwargs):
+    text = TRANSLATIONS.get(key, key)
+    if kwargs:
+        try:
+            return text.format(**kwargs)
+        except Exception:
+            return text
+    return text
+
+# ------------------------------------------------------
 # LOGGING SETUP
 # ------------------------------------------------------
 log_cfg = config.get("logging", {})
@@ -252,19 +283,19 @@ def fmt(e: TournamentEvent) -> str:
     
     # Format time display
     if e['is_all_day'] or e['time'] is None:
-        time_display = f"**{e['date'].strftime('%d.%m.%Y')} (all day)**"
+        time_display = t("fmt_all_day", date=e['date'].strftime('%d.%m.%Y'))
     else:
         dt = get_event_datetime(e)
         time_display = f"**{dt.strftime('%H:%M %d.%m.%Y')}**"
     
     return (
-        f"💰 **{e['name']}**\n"
-        f"🏢 Room: **{e['room']}**\n"
-        f"💵 Prize: **{e['prize']}**\n"
-        f"🕒 Start: {time_display}\n"
-        f"🔑 Password: **{e['password']}**\n"
-        f"{source_emoji} Source: {e.get('source', 'n/a')}\n"
-        f"──────────────"
+        t("fmt_name", name=e['name']) +
+        t("fmt_room", room=e['room']) +
+        t("fmt_prize", prize=e['prize']) +
+        t("fmt_start", time=time_display) +
+        t("fmt_password", password=e['password']) +
+        t("fmt_source", emoji=source_emoji, source=e.get('source', 'n/a')) +
+        "──────────────"
     )
 
 # ------------------------------------------------------
@@ -281,10 +312,10 @@ async def send_today(message):
     next_24h = [e for e in events if now <= get_event_datetime(e) <= next_24h_cutoff]
 
     if not next_24h:
-        await send_discord_message(message.channel, "📭 No freerolls in the next 24 hours.")
+        await send_discord_message(message.channel, t("no_freerolls_24h"))
         return
 
-    await send_discord_message(message.channel, "📅 **Freerolls for the next 24 hours:**\n")
+    await send_discord_message(message.channel, t("freerolls_next_24h"))
     for e in next_24h:
         await send_discord_message(message.channel, fmt(e))
 
@@ -298,49 +329,39 @@ async def send_next(message):
     future = [e for e in events if not e['is_all_day'] and get_event_datetime(e) > now]
 
     if not future:
-        await send_discord_message(message.channel, "❌ No upcoming freeroll.")
+        await send_discord_message(message.channel, t("no_upcoming_freeroll"))
         return
 
     nxt = future[0]
     delta = get_event_datetime(nxt) - now
     total_minutes = int(delta.total_seconds() / 60)
     
-    time_msg = f"⏰ **Starts in {total_minutes} minutes!**\n\n"
-    await send_discord_message(message.channel, "👉 **Next freeroll:**\n" + time_msg + fmt(nxt))
+    time_msg = t("starts_in_minutes", min=total_minutes)
+    await send_discord_message(message.channel, t("next_freeroll") + time_msg + fmt(nxt))
 
 
 async def send_debug(message):
     events = fetch_freerolls()
-    await send_discord_message(message.channel, f"🔧 Debug: {len(events)} freerolls loaded.")
+    await send_discord_message(message.channel, t("debug_freerolls_loaded", count=len(events)))
 
 
 async def send_test(message):
-    await send_discord_message(message.channel, "🧪 Test OK! The bot is running.")
+    await send_discord_message(message.channel, t("test_ok"))
 
 
 async def send_help(message):
-    help_text = (
-        "🃏 **Freeroll Bot Commands:**\n\n"
-        "**!day** - Freerolls for the next 24 hours\n"
-        "**!next** - Details of the nearest freeroll\n"
-        "**!test** - Check bot operation\n"
-        "**!help** - This help message\n\n"
-        "The bot automatically monitors freerolls and sends notifications:\n"
-        "⏰ 1 hour before start\n"
-        "🚨 10 minutes before start"
-    )
-    await send_discord_message(message.channel, help_text)
+    await send_discord_message(message.channel, t("help_text"))
 
 # ------------------------------------------------------
 # STATUS ROTATOR (presence cycle)
 # ------------------------------------------------------
-STATUS_MESSAGES = cycle(config.get("status_messages", [
+STATUS_MESSAGES = cycle(TRANSLATIONS.get("status_messages", config.get("status_messages", [
     "👹 Monitoring freerolls…",
     "🃏 Hunt is on…",
     "💰 Botzilla in active mode",
     "🧨 10-minute alerts ready",
     "♠️ New freeroll approaching…"
-]))
+])))
 
 async def status_rotator():
     await bot.wait_until_ready()
@@ -407,9 +428,9 @@ async def watcher():
             
             # If we've already sent a daily summary today, send with "New daily event" title
             if has_sent_today:
-                await send_discord_message(channel, "🆕 **New daily event:**\n")
+                await send_discord_message(channel, t("new_daily_event"))
             else:
-                await send_discord_message(channel, "📅 **Freerolls for the next 24 hours:**\n")
+                await send_discord_message(channel, t("freerolls_next_24h"))
             
             for e in new_events:
                 await send_discord_message(channel, fmt(e))
@@ -437,7 +458,7 @@ async def watcher():
                     SENT_ALERTS.add(event_key)
                     await send_discord_message(
                         channel,
-                        f"⏰ **Starts in {total_minutes} minutes!**\n\n" + fmt(nxt)
+                        t("starts_in_minutes", min=total_minutes) + fmt(nxt)
                     )
 
             # Urgent alert (e.g. 10 minutes)
@@ -447,7 +468,7 @@ async def watcher():
                     SENT_ALERTS.add(event_key)
                     await send_discord_message(
                         channel,
-                        f"🚨 **ATTENTION! Starts in {total_minutes} minutes!**\n\n" + fmt(nxt)
+                        t("urgent_starts_in_minutes", min=total_minutes) + fmt(nxt)
                     )
 
         # Memory cleanup: remove expired events

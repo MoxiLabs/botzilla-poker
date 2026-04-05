@@ -1,0 +1,26 @@
+{
+  "no_freerolls_24h": "📭 No freerolls in the next 24 hours.",
+  "freerolls_next_24h": "📅 **Freerolls for the next 24 hours:**\n",
+  "no_upcoming_freeroll": "❌ No upcoming freeroll.",
+  "starts_in_minutes": "⏰ **Starts in {min} minutes!**\n\n",
+  "next_freeroll": "👉 **Next freeroll:**\n",
+  "debug_freerolls_loaded": "🔧 Debug: {count} freerolls loaded.",
+  "test_ok": "🧪 Test OK! The bot is running.",
+  "help_text": "🃏 **Freeroll Bot Commands:**\n\n**!day** - Freerolls for the next 24 hours\n**!next** - Details of the nearest freeroll\n**!test** - Check bot operation\n**!help** - This help message\n\nThe bot automatically monitors freerolls and sends notifications:\n⏰ 1 hour before start\n🚨 10 minutes before start",
+  "new_daily_event": "🆕 **New daily event:**\n",
+  "urgent_starts_in_minutes": "🚨 **ATTENTION! Starts in {min} minutes!**\n\n",
+  "fmt_name": "💰 **{name}**\n",
+  "fmt_room": "🏢 Room: **{room}**\n",
+  "fmt_prize": "💵 Prize: **{prize}**\n",
+  "fmt_start": "🕒 Start: {time}\n",
+  "fmt_password": "🔑 Password: **{password}**\n",
+  "fmt_source": "{emoji} Source: {source}\n",
+  "fmt_all_day": "**{date} (all day)**",
+  "status_messages": [
+    "👹 Monitoring freerolls…",
+    "🃏 Hunt is on…",
+    "💰 Botzilla in active mode",
+    "🧨 10-minute alerts ready",
+    "♠️ New freeroll approaching…"
+  ]
+}

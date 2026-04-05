@@ -7,6 +7,7 @@
   "last_event_file": "last_event.json",
   "url_password": "https://freeroll-password.com/",
   "url_pass": "https://freerollpass.com/",
+  "locale": "hu",
   "watcher_sleep_seconds": 300,
   "status_rotator_sleep_seconds": 20,
   "alert_thresholds": {
