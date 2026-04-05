@@ -3,6 +3,7 @@ from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 from bs4 import BeautifulSoup
 import aiohttp
+import asyncio
 from typing import List, Dict, Optional
 from .models import TournamentEvent
 
@@ -199,7 +200,7 @@ class FreerollParser:
     async def get_tournaments(self) -> List[TournamentEvent]:
         """Fetch and parse all tournaments"""
         html_content = await self.fetch_page()
-        tournaments = self.parse_freerolls(html_content)
+        tournaments = await asyncio.to_thread(self.parse_freerolls, html_content)
         
         events: List[TournamentEvent] = []
         for tournament in tournaments:

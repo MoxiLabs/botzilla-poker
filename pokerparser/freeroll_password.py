@@ -1,6 +1,7 @@
 """URL parser for freeroll-password.com"""
 
 import re
+import asyncio
 import aiohttp
 from bs4 import BeautifulSoup
 from typing import List, Dict, Optional
@@ -128,4 +129,4 @@ class FreeRollPasswordParser:
     async def get_tournaments(self) -> List[TournamentEvent]:
         """Fetch and parse all tournaments"""
         html_content = await self.fetch_page()
-        return self.parse_freerolls(html_content)
+        return await asyncio.to_thread(self.parse_freerolls, html_content)
