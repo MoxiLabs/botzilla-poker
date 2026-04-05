@@ -9,6 +9,7 @@
   "help_text": "🃏 **Freeroll Bot Parancsok:**\n\n**!day** - A következő 24 óra freerolljai\n**!next** - A legközelebbi freeroll adatai\n**!test** - Bot működésének tesztelése\n**!help** - Ez a súgó üzenet\n\nA bot automatikusan figyeli a freerollokat és értesítést küld:\n⏰ 1 órával kezdés előtt\n🚨 10 perccel kezdés előtt",
   "new_daily_event": "🆕 **Új napi esemény:**\n",
   "urgent_starts_in_minutes": "🚨 **FIGYELEM! Kezdődik {min} perc múlva!**\n\n",
+  "fmt_high_value": "🏆 **[EXTRA NYEREMÉNY: {prize}]** 🚨\n",
   "fmt_name": "💰 **{name}**\n",
   "fmt_room": "🏢 Terem: **{room}**\n",
   "fmt_prize": "💵 Nyeremény: **{prize}**\n",

@@ -9,6 +9,7 @@
   "help_text": "🃏 **Freeroll Bot Commands:**\n\n**!day** - Freerolls for the next 24 hours\n**!next** - Details of the nearest freeroll\n**!test** - Check bot operation\n**!help** - This help message\n\nThe bot automatically monitors freerolls and sends notifications:\n⏰ 1 hour before start\n🚨 10 minutes before start",
   "new_daily_event": "🆕 **New daily event:**\n",
   "urgent_starts_in_minutes": "🚨 **ATTENTION! Starts in {min} minutes!**\n\n",
+  "fmt_high_value": "🏆 **[HIGH VALUE: {prize}]** 🚨\n",
   "fmt_name": "💰 **{name}**\n",
   "fmt_room": "🏢 Room: **{room}**\n",
   "fmt_prize": "💵 Prize: **{prize}**\n",

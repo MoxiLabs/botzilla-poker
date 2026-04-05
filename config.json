@@ -16,6 +16,7 @@
   },
   "command_prefix": "!",
   "command_suffix": "_poker",
+  "high_value_threshold": 500,
   "logging": {
     "level": "INFO",
     "file": "botzilla.log",

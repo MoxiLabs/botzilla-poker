@@ -279,6 +279,19 @@ def cleanup_old_events() -> None:
 # ------------------------------------------------------
 # FORMATTER
 # ------------------------------------------------------
+def extract_prize_value(prize_str: str) -> int:
+    """Extract integer value from prize string (e.g. '$500' -> 500)"""
+    if not prize_str:
+        return 0
+    try:
+        clean_str = prize_str.replace(',', '').replace('.', '')
+        match = re.search(r'\d+', clean_str)
+        if match:
+            return int(match.group())
+    except Exception:
+        pass
+    return 0
+
 def fmt(e: TournamentEvent) -> str:
     source_emoji = "🌐" if e.get('source') == "freeroll-password.com" else "🎯"
     
@@ -291,8 +304,16 @@ def fmt(e: TournamentEvent) -> str:
         dt_aware = dt.replace(tzinfo=ZoneInfo("Europe/Budapest"))
         timestamp = int(dt_aware.timestamp())
         time_display = f"**{dt.strftime('%H:%M %d.%m.%Y')}** (<t:{timestamp}:R>)"
+        
+    prize_val = extract_prize_value(e['prize'])
+    threshold = config.get("high_value_threshold", 500)
+    
+    high_value_msg = ""
+    if prize_val >= threshold:
+        high_value_msg = t("fmt_high_value", prize=e['prize'])
     
     return (
+        high_value_msg +
         t("fmt_name", name=e['name']) +
         t("fmt_room", room=e['room']) +
         t("fmt_prize", prize=e['prize']) +
