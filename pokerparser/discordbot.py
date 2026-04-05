@@ -1,4 +1,5 @@
 import discord
+from discord.ext import commands
 import asyncio
 import aiohttp
 import re
@@ -136,7 +137,6 @@ LAST_EVENT_FILE = config.get("last_event_file", "last_event.json")
 
 intents = discord.Intents.default()
 intents.message_content = True
-bot = discord.Client(intents=intents)
 
 URL_PASSWORD = config.get("url_password", "https://freeroll-password.com/")
 URL_PASS = config.get("url_pass", "https://freerollpass.com/")
@@ -144,6 +144,12 @@ URL_PASS = config.get("url_pass", "https://freerollpass.com/")
 # Command settings
 COMMAND_PREFIX = config.get("command_prefix", "!")
 COMMAND_SUFFIX = config.get("command_suffix", "")
+
+bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents, help_command=None)
+
+@bot.check
+async def globally_block_dms_and_channels(ctx):
+    return ctx.channel.id in ALLOWED_CHANNEL_IDS
 
 # ------------------------------------------------------
 # DISCORD WRAPPER FOR DRY RUN
@@ -304,7 +310,8 @@ async def create_event_embed(e: TournamentEvent, urgent=False) -> tuple[discord.
 # ------------------------------------------------------
 # COMMANDS
 # ------------------------------------------------------
-async def send_today(message):
+@bot.command(name=f"day{COMMAND_SUFFIX}")
+async def cmd_day(ctx):
     # Use globally stored events from the watcher
     global GLOBAL_EVENTS
     events = GLOBAL_EVENTS if GLOBAL_EVENTS else await fetch_freerolls()
@@ -315,15 +322,16 @@ async def send_today(message):
     next_24h = [e for e in events if now <= get_event_datetime(e) <= next_24h_cutoff]
 
     if not next_24h:
-        await send_discord_message(message.channel, t("no_freerolls_24h"))
+        await send_discord_message(ctx.channel, t("no_freerolls_24h"))
         return
 
-    await send_discord_message(message.channel, content=t("freerolls_next_24h"))
+    await send_discord_message(ctx.channel, content=t("freerolls_next_24h"))
     for e in next_24h:
         emb, attach = await create_event_embed(e)
-        await send_discord_message(message.channel, embed=emb, file=attach)
+        await send_discord_message(ctx.channel, embed=emb, file=attach)
 
-async def send_next(message):
+@bot.command(name=f"next{COMMAND_SUFFIX}")
+async def cmd_next(ctx):
     # Use globally stored events from the watcher
     global GLOBAL_EVENTS
     events = GLOBAL_EVENTS if GLOBAL_EVENTS else await fetch_freerolls()
@@ -333,7 +341,7 @@ async def send_next(message):
     future = [e for e in events if not e['is_all_day'] and get_event_datetime(e) > now]
 
     if not future:
-        await send_discord_message(message.channel, t("no_upcoming_freeroll"))
+        await send_discord_message(ctx.channel, t("no_upcoming_freeroll"))
         return
 
     nxt = future[0]
@@ -342,20 +350,23 @@ async def send_next(message):
     
     time_msg = t("starts_in_minutes", min=total_minutes)
     emb, attach = await create_event_embed(nxt)
-    await send_discord_message(message.channel, content=t("next_freeroll") + time_msg, embed=emb, file=attach)
+    await send_discord_message(ctx.channel, content=t("next_freeroll") + time_msg, embed=emb, file=attach)
 
 
-async def send_debug(message):
+@bot.command(name=f"debug{COMMAND_SUFFIX}")
+async def cmd_debug(ctx):
     events = await fetch_freerolls()
-    await send_discord_message(message.channel, t("debug_freerolls_loaded", count=len(events)))
+    await send_discord_message(ctx.channel, t("debug_freerolls_loaded", count=len(events)))
 
 
-async def send_test(message):
-    await send_discord_message(message.channel, t("test_ok"))
+@bot.command(name=f"test{COMMAND_SUFFIX}")
+async def cmd_test(ctx):
+    await send_discord_message(ctx.channel, t("test_ok"))
 
 
-async def send_help(message):
-    await send_discord_message(message.channel, t("help_text"))
+@bot.command(name=f"help{COMMAND_SUFFIX}")
+async def cmd_help(ctx):
+    await send_discord_message(ctx.channel, t("help_text"))
 
 # ------------------------------------------------------
 # STATUS ROTATOR (presence cycle)
@@ -496,34 +507,6 @@ async def on_ready():
 
     asyncio.create_task(status_rotator())
     asyncio.create_task(watcher())
-
-
-@bot.event
-async def on_message(message):
-    if message.author == bot.user:
-        return
-
-    # Check if the channel is allowed for commands
-    if message.channel.id not in ALLOWED_CHANNEL_IDS:
-        return
-
-    content = message.content.lower()
-
-    # Helper function to check for the command with its prefix and suffix
-    def is_cmd(cmd_name):
-        return content == f"{COMMAND_PREFIX}{cmd_name}{COMMAND_SUFFIX}".lower()
-
-    if is_cmd("day"):
-        await send_today(message)
-
-    if is_cmd("next"):
-        await send_next(message)
-
-    if is_cmd("test"):
-        await send_test(message)
-
-    if is_cmd("help"):
-        await send_help(message)
 
 
 
