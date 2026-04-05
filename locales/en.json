@@ -13,7 +13,7 @@
   "fmt_room": "🏢 Room: **{room}**\n",
   "fmt_prize": "💵 Prize: **{prize}**\n",
   "fmt_start": "🕒 Start: {time}\n",
-  "fmt_password": "🔑 Password: **{password}**\n",
+  "fmt_password": "🔑 Password: `{password}`\n",
   "fmt_source": "{emoji} Source: {source}\n",
   "fmt_all_day": "**{date} (all day)**",
   "status_messages": [

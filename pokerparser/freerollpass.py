@@ -1,5 +1,6 @@
 import datetime as dt
 from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
 from bs4 import BeautifulSoup
 import requests
 from typing import List, Dict, Optional
@@ -28,14 +29,14 @@ class FreerollParser:
             loader_time = soup.find('div', class_='loader-time')
             
             if not loader_time:
-                return 1  # Default to Budapest time (GMT+1)
+                return 1  # Default CET offset
             
             # Get server time and date
             utime_div = loader_time.find('div', id='utime')
             udate_div = loader_time.find('div', id='udate')
             
             if not utime_div or not udate_div:
-                return 1
+                return 1  # Default CET offset
             
             server_time_str = utime_div.text.strip()  # e.g., "22:07"
             server_date_str = udate_div.text.strip()  # e.g., "24.11.2025"
@@ -44,16 +45,18 @@ class FreerollParser:
             server_dt_str = f"{server_date_str} {server_time_str}"
             server_dt = datetime.strptime(server_dt_str, "%d.%m.%Y %H:%M")
             
-            # Get current Budapest time (GMT+1)
-            budapest_tz = timezone(timedelta(hours=1))
-            budapest_now = datetime.now(budapest_tz).replace(tzinfo=None)
+            # Get current Budapest time (handles CET/CEST automatically)
+            budapest_tz = ZoneInfo("Europe/Budapest")
+            budapest_now = datetime.now(budapest_tz)
+            budapest_offset = int(budapest_now.utcoffset().total_seconds() / 3600)
+            budapest_now_naive = budapest_now.replace(tzinfo=None)
             
             # Calculate the difference in hours between server time and Budapest time
-            time_diff = server_dt - budapest_now
+            time_diff = server_dt - budapest_now_naive
             offset_diff = round(time_diff.total_seconds() / 3600)
             
-            # The actual timezone offset is Budapest (GMT+1) plus the difference
-            offset_hours = 1 + offset_diff
+            # The actual timezone offset is Budapest offset plus the difference
+            offset_hours = budapest_offset + offset_diff
             
             # Clamp to reasonable timezone range (-12 to +14)
             offset_hours = max(-12, min(14, offset_hours))
@@ -64,7 +67,7 @@ class FreerollParser:
             
         except Exception as e:
             print(f"Warning: Failed to calculate timezone offset: {e}", flush=True)
-            return 0  # Default to Budapest time (GMT+1)
+            return 0  # Default UTC on error
     
     def parse_freerolls(self, html_content: str) -> List[Dict]:
         """Parse the freeroll list from HTML content"""
@@ -217,8 +220,8 @@ class FreerollParser:
                 source_tz = timezone(timedelta(hours=tz_offset))
                 dt_aware = dt_naive.replace(tzinfo=source_tz)
                 
-                # Convert to Budapest time (GMT+1)
-                budapest_tz = timezone(timedelta(hours=1))
+                # Convert to Budapest time (handles CET/CEST automatically)
+                budapest_tz = ZoneInfo("Europe/Budapest")
                 dt_budapest = dt_aware.astimezone(budapest_tz)
 
                 # Get password

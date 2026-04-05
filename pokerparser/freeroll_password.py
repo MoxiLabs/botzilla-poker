@@ -5,6 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 from typing import List, Dict, Optional
 from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
 from .models import TournamentEvent
 
 class FreeRollPasswordParser:
@@ -91,8 +92,8 @@ class FreeRollPasswordParser:
                             source_tz = timezone(timedelta(hours=tz_offset))
                             dt_aware = dt_naive.replace(tzinfo=source_tz)
                             
-                            # Convert to Budapest time (GMT+1)
-                            budapest_tz = timezone(timedelta(hours=1))
+                            # Convert to Budapest time (handles CET/CEST automatically)
+                            budapest_tz = ZoneInfo("Europe/Budapest")
                             dt_budapest = dt_aware.astimezone(budapest_tz)
                             
                             # Extract time from converted datetime

@@ -13,7 +13,7 @@
   "fmt_room": "🏢 Terem: **{room}**\n",
   "fmt_prize": "💵 Nyeremény: **{prize}**\n",
   "fmt_start": "🕒 Kezdés: {time}\n",
-  "fmt_password": "🔑 Jelszó: **{password}**\n",
+  "fmt_password": "🔑 Jelszó: `{password}`\n",
   "fmt_source": "{emoji} Forrás: {source}\n",
   "fmt_all_day": "**{date} (egész nap)**",
   "status_messages": [

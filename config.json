@@ -15,14 +15,7 @@
     "urgent": 10
   },
   "command_prefix": "!",
-  "command_suffix": "_c",
-  "status_messages": [
-    "👹 Monitoring freerolls…",
-    "🃏 Hunt is on…",
-    "💰 Botzilla in active mode",
-    "🧨 10-minute alerts ready",
-    "♠️ New freeroll approaching…"
-  ],
+  "command_suffix": "_poker",
   "logging": {
     "level": "INFO",
     "file": "botzilla.log",

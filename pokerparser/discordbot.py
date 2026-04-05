@@ -7,6 +7,7 @@ import os
 import sys
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from itertools import cycle
 from typing import List, cast, Union
 from .freerollpass import FreerollParser
@@ -286,7 +287,10 @@ def fmt(e: TournamentEvent) -> str:
         time_display = t("fmt_all_day", date=e['date'].strftime('%d.%m.%Y'))
     else:
         dt = get_event_datetime(e)
-        time_display = f"**{dt.strftime('%H:%M %d.%m.%Y')}**"
+        # Make the naive datetime aware of its actual timezone (Budapest)
+        dt_aware = dt.replace(tzinfo=ZoneInfo("Europe/Budapest"))
+        timestamp = int(dt_aware.timestamp())
+        time_display = f"**{dt.strftime('%H:%M %d.%m.%Y')}** (<t:{timestamp}:R>)"
     
     return (
         t("fmt_name", name=e['name']) +
