@@ -147,7 +147,7 @@ COMMAND_SUFFIX = config.get("command_suffix", "")
 # ------------------------------------------------------
 # DISCORD WRAPPER FOR DRY RUN
 # ------------------------------------------------------
-async def send_discord_message(target, content: str = None, embed: discord.Embed = None):
+async def send_discord_message(target, content: str = None, embed: discord.Embed = None, file: discord.File = None):
     """Send message to Discord or print to console based on DRY_RUN env variable"""
     dry_run = os.environ.get('DRY_RUN', '')
     
@@ -155,9 +155,14 @@ async def send_discord_message(target, content: str = None, embed: discord.Embed
         msg = f"[DRY_RUN] Message to {target}: {content if content else ''}"
         if embed:
             msg += f" [Embed: {embed.title}]"
+        if file:
+            msg += f" [File: {file.filename}]"
         log.info(msg)
     else:
-        await target.send(content=content, embed=embed)
+        if file:
+            await target.send(content=content, embed=embed, file=file)
+        else:
+            await target.send(content=content, embed=embed)
 
 # ------------------------------------------------------
 # SCRAPER – freeroll-password.com
@@ -295,9 +300,9 @@ def extract_prize_value(prize_str: str) -> int:
         pass
     return 0
 
-# No hardcoded thumbnails needed anymore, generated dynamically
+# No hardcoded thumbnails needed anymore, generated dynamically and cached locally
 
-def create_event_embed(e: TournamentEvent, urgent=False) -> discord.Embed:
+def create_event_embed(e: TournamentEvent, urgent=False) -> tuple[discord.Embed, Optional[discord.File]]:
     source_emoji = "🌐" if e.get('source') == "freeroll-password.com" else "🎯"
     
     # Format time display
@@ -334,12 +339,29 @@ def create_event_embed(e: TournamentEvent, urgent=False) -> discord.Embed:
     
     embed.add_field(name=t("embed_source", emoji=source_emoji), value=e.get('source', 'n/a'), inline=True)
     
-    # Dynamically generate room thumbnail URL
+    # Dynamically fetch and attach room thumbnail 
     room_clean = e['room'].lower().replace(' ', '')
-    thumb_url = f"https://freerollpass.com/storage/app/media/logo/{room_clean}-x2.png"
-    embed.set_thumbnail(url=thumb_url)
+    logo_filename = f"{room_clean}-x2.png"
+    logo_path = os.path.join(os.path.dirname(__file__), "..", "assets", "logos", logo_filename)
+    
+    file_attachment = None
+    if not os.path.exists(logo_path):
+        os.makedirs(os.path.dirname(logo_path), exist_ok=True)
+        dl_url = f"https://freerollpass.com/storage/app/media/logo/{logo_filename}"
+        try:
+            resp = requests.get(dl_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}, timeout=5)
+            if resp.status_code == 200:
+                with open(logo_path, 'wb') as f:
+                    f.write(resp.content)
+        except Exception as ex:
+            log.debug(f"Failed to download logo for {room_clean}: {ex}")
+
+    if os.path.exists(logo_path):
+        # We must open caching a File object for the Discord message
+        file_attachment = discord.File(logo_path, filename=logo_filename)
+        embed.set_thumbnail(url=f"attachment://{logo_filename}")
             
-    return embed
+    return embed, file_attachment
 
 # ------------------------------------------------------
 # COMMANDS
@@ -360,7 +382,8 @@ async def send_today(message):
 
     await send_discord_message(message.channel, content=t("freerolls_next_24h"))
     for e in next_24h:
-        await send_discord_message(message.channel, embed=create_event_embed(e))
+        emb, attach = create_event_embed(e)
+        await send_discord_message(message.channel, embed=emb, file=attach)
 
 async def send_next(message):
     # Use globally stored events from the watcher
@@ -380,7 +403,8 @@ async def send_next(message):
     total_minutes = int(delta.total_seconds() / 60)
     
     time_msg = t("starts_in_minutes", min=total_minutes)
-    await send_discord_message(message.channel, content=t("next_freeroll") + time_msg, embed=create_event_embed(nxt))
+    emb, attach = create_event_embed(nxt)
+    await send_discord_message(message.channel, content=t("next_freeroll") + time_msg, embed=emb, file=attach)
 
 
 async def send_debug(message):
@@ -476,7 +500,8 @@ async def watcher():
                 await send_discord_message(channel, content=t("freerolls_next_24h"))
             
             for e in new_events:
-                await send_discord_message(channel, embed=create_event_embed(e))
+                emb, attach = create_event_embed(e)
+                await send_discord_message(channel, embed=emb, file=attach)
                 # Add to the sent events list
                 add_sent_event(e)
 
@@ -499,10 +524,12 @@ async def watcher():
                 event_key = (get_event_datetime(nxt), nxt["name"], 'warning')
                 if event_key not in SENT_ALERTS:
                     SENT_ALERTS.add(event_key)
+                    emb, attach = create_event_embed(nxt)
                     await send_discord_message(
                         channel,
                         content=t("starts_in_minutes", min=total_minutes),
-                        embed=create_event_embed(nxt)
+                        embed=emb,
+                        file=attach
                     )
 
             # Urgent alert (e.g. 10 minutes)
@@ -510,10 +537,12 @@ async def watcher():
                 event_key = (get_event_datetime(nxt), nxt["name"], 'urgent')
                 if event_key not in SENT_ALERTS:
                     SENT_ALERTS.add(event_key)
+                    emb, attach = create_event_embed(nxt, urgent=True)
                     await send_discord_message(
                         channel,
                         content=t("urgent_starts_in_minutes", min=total_minutes),
-                        embed=create_event_embed(nxt, urgent=True)
+                        embed=emb,
+                        file=attach
                     )
 
         # Memory cleanup: remove expired events
