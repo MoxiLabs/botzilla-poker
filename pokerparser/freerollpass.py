@@ -224,10 +224,14 @@ class FreerollParser:
                     except:
                         continue
 
-                # The times on freerollpass.com are already in CET/CEST (Budapest time)
-                # Simply attach the Budapest timezone to the parsed naive datetime
+                # The times on freerollpass.com in raw HTML are rendered in UK time (Europe/London)
+                # We attach the London timezone to the naive datetime, and convert it to Budapest time.
+                # This perfectly handles both CET/CEST and GMT/BST DST offsets!
+                source_tz = ZoneInfo("Europe/London")
+                dt_aware = dt_naive.replace(tzinfo=source_tz)
+                
                 budapest_tz = ZoneInfo("Europe/Budapest")
-                dt_budapest = dt_naive.replace(tzinfo=budapest_tz)
+                dt_budapest = dt_aware.astimezone(budapest_tz)
 
                 # Get password
                 password = tournament.get('password', 'n/a')
