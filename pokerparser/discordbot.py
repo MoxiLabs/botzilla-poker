@@ -299,7 +299,7 @@ ROOM_THUMBNAILS = {
     "PokerStars": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/PokerStars_logo.svg/512px-PokerStars_logo.svg.png",
     "888poker": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/888poker_logo.svg/512px-888poker_logo.svg.png",
     "GGPoker": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/GGPoker_logo.svg/512px-GGPoker_logo.svg.png",
-    "PartyPoker": "https://upload.wikimedia.org/wikipedia/en/thumb/0/07/PartyPoker_Logo.svg/512px-PartyPoker_Logo.svg.png",
+    "PartyPoker": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Partypoker_logo.png/512px-Partypoker_logo.png",
     "WPT Global": "https://wptglobal.com/images/default-source/default-album/wpt-global-logo-horizontal.png",
     "ACR Poker": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Americas_Cardroom_Logo.png/512px-Americas_Cardroom_Logo.png",
     "YaPoker": "https://yapoker.com/wp-content/uploads/2018/02/yapoker-logo.png",
@@ -341,12 +341,12 @@ def create_event_embed(e: TournamentEvent, urgent=False) -> discord.Embed:
     password_text = f"`{e['password']}`" if e['password'] != "not required" else "❌"
     embed.add_field(name=t("embed_password"), value=password_text, inline=True)
     
-    source_text = f"{source_emoji} {e.get('source', 'n/a')}"
-    embed.add_field(name=t("embed_source"), value=source_text, inline=True)
+    embed.add_field(name=t("embed_source", emoji=source_emoji), value=e.get('source', 'n/a'), inline=True)
     
     # Check for known poker room thumbnails
+    room_clean = e['room'].lower().replace(' ', '')
     for room_key, thumb_url in ROOM_THUMBNAILS.items():
-        if room_key.lower() in e['room'].lower():
+        if room_key.lower().replace(' ', '') in room_clean:
             embed.set_thumbnail(url=thumb_url)
             break
             
