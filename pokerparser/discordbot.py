@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 from itertools import cycle
-from typing import List, cast, Union
+from typing import List, cast, Union, Optional
 from .freerollpass import FreerollParser
 from .freeroll_password import FreeRollPasswordParser
 from .models import TournamentEvent

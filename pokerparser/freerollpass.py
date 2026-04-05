@@ -41,9 +41,16 @@ class FreerollParser:
             server_time_str = utime_div.text.strip()  # e.g., "22:07"
             server_date_str = udate_div.text.strip()  # e.g., "24.11.2025"
             
+            if not server_time_str or not server_date_str:
+                return 1  # Default CET offset
+            
             # Parse server datetime
             server_dt_str = f"{server_date_str} {server_time_str}"
-            server_dt = datetime.strptime(server_dt_str, "%d.%m.%Y %H:%M")
+            try:
+                server_dt = datetime.strptime(server_dt_str, "%d.%m.%Y %H:%M")
+            except ValueError as e:
+                log.warning(f"Failed to calculate timezone offset: {e}")
+                return 1
             
             # Get current Budapest time (handles CET/CEST automatically)
             budapest_tz = ZoneInfo("Europe/Budapest")
