@@ -19,6 +19,10 @@
   "help_notif_title": "📢 Értesítések",
   "help_notif_desc": "⏰ 1 órával kezdés előtt\n🚨 10 perccel kezdés előtt",
   "help_footer": "Sok szerencsét! 🍀",
+  "cmd_sync_done": "✅ Sikeresen szinkronizáltam {count} parancsot ezen a szerveren.",
+  "cmd_sync_global_done": "✅ Globálisan szinkronizáltam {count} parancsot (akár 1 óra is lehet, amíg megjelenik).",
+  "cmd_sync_copy_done": "✅ Átmásoltam a globális parancsokat és szinkronizáltam {count} parancsot ezen a szerveren.",
+  "cmd_clear_done": "🗑️ Minden parancsot töröltem. Használd a {cmd} parancsot az újratelepítéshez.",
 
   "new_daily_event": "🆕 **Új napi esemény:**\n",
   "urgent_starts_in_minutes": "🚨 **FIGYELEM! Kezdődik {min} perc múlva!**\n\n",

@@ -54,6 +54,7 @@ async def on_ready():
     
     # Load Cogs
     try:
+        await bot.load_extension("pokerparser.cogs.admin")
         await bot.load_extension("pokerparser.cogs.commands")
         await bot.load_extension("pokerparser.cogs.tasks")
         log.info("Cogs loaded successfully")

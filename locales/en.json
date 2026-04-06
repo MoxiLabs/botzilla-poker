@@ -19,6 +19,10 @@
   "help_notif_title": "📢 Notifications",
   "help_notif_desc": "⏰ 1 hour before start\n🚨 10 minutes before start",
   "help_footer": "Happy hunting! 🍀",
+  "cmd_sync_done": "✅ Successfully synced {count} commands to this guild.",
+  "cmd_sync_global_done": "✅ Synced {count} commands globally (may take up to 1 hour to propagate).",
+  "cmd_sync_copy_done": "✅ Copied global commands and synced {count} commands to this guild.",
+  "cmd_clear_done": "🗑️ All commands cleared. Use {cmd} to reinstall.",
 
   "new_daily_event": "🆕 **New daily event:**\n",
   "urgent_starts_in_minutes": "🚨 **ATTENTION! Starts in {min} minutes!**\n\n",
