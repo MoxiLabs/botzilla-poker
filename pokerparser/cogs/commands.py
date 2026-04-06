@@ -123,30 +123,39 @@ class PokerCommands(commands.Cog):
         suffix = self.command_suffix
         target = source.channel if hasattr(source, "channel") else source.channel
         
+        # Premium Deep Blue Color
+        COLOR_HELP = 0x2980b9
+        
         embed = discord.Embed(
-            title=t("help_title"),
+            title=f"🃏 {t('help_title')}",
             description=t("help_description"),
-            color=discord.Color.blue()
+            color=COLOR_HELP
         )
         
-        commands_list = [
+        # Set bot avatar as thumbnail for premium look
+        if self.bot.user.avatar:
+            embed.set_thumbnail(url=self.bot.user.avatar.url)
+        
+        # 1. Slash Commands Section (Modern)
+        slash_list = [
+            f"🚀 `/day` - {t('help_slash_day')}",
+            f"🎯 `/next` - {t('help_slash_next')}",
+            f"ℹ️ `/help` - {t('help_slash_help')}"
+        ]
+        embed.add_field(name=f"✨ {t('help_header_slash')}", value="\n".join(slash_list), inline=False)
+
+        # 2. Legacy Prefix Commands Section
+        prefix_list = [
             t("help_cmd_day", suffix=suffix),
             t("help_cmd_next", suffix=suffix),
-            t("help_cmd_test", suffix=suffix),
             t("help_cmd_help", suffix=suffix)
         ]
+        embed.add_field(name=f"🛠️ {t('help_header_prefix')}", value="\n".join(prefix_list), inline=False)
         
-        # Add slash command hints
-        slash_list = [
-            "`/day` - freerolls for 24h",
-            "`/next` - next upcoming tournament",
-            "`/help` - this instruction manual"
-        ]
+        # 3. Notification Info
+        embed.add_field(name=f"📢 {t('help_notif_title')}", value=t("help_notif_desc"), inline=False)
         
-        embed.add_field(name="🛠️ Prefix Parancsok", value="\n".join(commands_list), inline=False)
-        embed.add_field(name="🔥 Slash Parancsok", value="\n".join(slash_list), inline=False)
-        embed.add_field(name=t("help_notif_title"), value=t("help_notif_desc"), inline=False)
-        embed.set_footer(text=t("help_footer"))
+        embed.set_footer(text=f"Botzilla Poker • {t('help_footer')}")
         
         if isinstance(source, discord.Interaction):
              await source.response.send_message(embed=embed)
