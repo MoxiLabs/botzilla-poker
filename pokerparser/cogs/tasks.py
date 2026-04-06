@@ -18,17 +18,21 @@ class PokerTasks(commands.Cog):
         # In-memory alert tracking (last 2 hours)
         self.sent_alerts = set()
         
-        # Status rotator iterator
-        status_msgs = config.get("status_messages", [
-            "👹 Monitoring freerolls…",
-            "🃏 Hunt is on…",
-            "💰 Botzilla in active mode",
-            "🧨 10-minute alerts ready",
-            "♠️ New freeroll approaching…"
-        ])
-        # Try to get from translations if available
-        # TRANSLATIONS might not be directly accessible here easily, let's just stick to config or defaults
+        # Status rotator iterator - prioritize translations
+        status_msgs = t("status_messages")
+        
+        # If t() returns the key itself because it's missing or not a list, fallback to config
+        if not isinstance(status_msgs, list):
+            status_msgs = config.get("status_messages", [
+                "👹 Monitoring freerolls…",
+                "🃏 Hunt is on…",
+                "💰 Botzilla in active mode",
+                "🧨 10-minute alerts ready",
+                "♠️ New freeroll approaching…"
+            ])
+            
         self.status_messages = cycle(status_msgs)
+
         
         # Start the loops
         self.status_rotator.start()
