@@ -128,6 +128,7 @@ async def create_event_embed(e: TournamentEvent, urgent=False) -> tuple[discord.
         except Exception as ex:
             log.debug(f"Failed to download logo for {room_clean}: {ex}")
 
+    if os.path.exists(logo_path):
         file_attachment = discord.File(logo_path, filename=logo_filename)
         embed.set_thumbnail(url=f"attachment://{logo_filename}")
             
