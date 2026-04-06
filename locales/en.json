@@ -31,6 +31,7 @@
   "embed_start": "🕒 Start",
   "embed_password": "🔑 Password",
   "embed_source": "{emoji} Source",
+  "embed_source_short": "🌐 Source",
   "status_messages": [
     "👹 Monitoring freerolls…",
     "🃏 Hunt is on…",

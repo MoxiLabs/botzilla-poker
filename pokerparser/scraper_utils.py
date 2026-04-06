@@ -83,20 +83,32 @@ async def create_event_embed(e: TournamentEvent, urgent=False) -> tuple[discord.
         
     prize_val = extract_prize_value(e['prize'])
     threshold = config.get("high_value_threshold", 500)
-    embed_color = discord.Color.green()
+    
+    # Premium Hex Colors
+    COLOR_GOLD = 0xd4af37      # Metallic Gold
+    COLOR_NEPHRITE = 0x27ae60  # Deep Green
+    COLOR_POMEGRANATE = 0xc0392b # Royal Red
+    
+    embed_color = COLOR_NEPHRITE
     if urgent:
-        embed_color = discord.Color.red()
+        embed_color = COLOR_POMEGRANATE
     elif prize_val >= threshold:
-        embed_color = discord.Color.gold()
+        embed_color = COLOR_GOLD
         
     embed = discord.Embed(title=f"💰 {e['name']}", color=embed_color)
+    
+    # Primary Details (Inline 1x3 row)
     embed.add_field(name=t("embed_room"), value=f"**{e['room']}**", inline=True)
     embed.add_field(name=t("embed_prize"), value=f"**{e['prize']}**", inline=True)
-    embed.add_field(name=t("embed_start"), value=time_display, inline=False)
     
     password_text = f"`{e['password']}`" if e['password'] != "not required" else "❌"
     embed.add_field(name=t("embed_password"), value=password_text, inline=True)
-    embed.add_field(name=t("embed_source", emoji=source_emoji), value=e.get('source', 'n/a'), inline=True)
+
+    # Secondary Details (Full row)
+    embed.add_field(name=t("embed_start"), value=time_display, inline=False)
+    
+    # Source Info & Branding
+    embed.set_footer(text=f"{t('embed_source_short')}: {e.get('source', 'n/a')} • {t('help_footer')}")
     
     room_clean = e['room'].lower().replace(' ', '')
     logo_filename = f"{room_clean}-x2.png"

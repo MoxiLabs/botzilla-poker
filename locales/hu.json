@@ -31,6 +31,7 @@
   "embed_start": "🕒 Kezdés",
   "embed_password": "🔑 Jelszó",
   "embed_source": "{emoji} Forrás",
+  "embed_source_short": "🌐 Forrás",
   "status_messages": [
     "👹 Freerollok figyelése…",
     "🃏 Kezdődik a vadászat…",
