@@ -12,6 +12,7 @@ from .freeroll_password import FreeRollPasswordParser
 from .freerollpass import FreerollParser
 from .logger import log
 from .core import config, t, TIMEZONE
+from .views import TournamentView
 
 
 # The global events variable
@@ -69,7 +70,7 @@ def extract_prize_value(prize_str: str) -> int:
         pass
     return 0
 
-async def create_event_embed(e: TournamentEvent, urgent=False) -> tuple[discord.Embed, Optional[discord.File]]:
+async def create_event_embed(e: TournamentEvent, urgent=False) -> tuple[discord.Embed, Optional[discord.File], Optional[discord.ui.View]]:
     source_emoji = "🌐" if e.get('source') == "freeroll-password.com" else "🎯"
     if e['is_all_day'] or e['time'] is None:
         time_display = t("fmt_all_day", date=e['date'].strftime('%d.%m.%Y'))
@@ -115,8 +116,8 @@ async def create_event_embed(e: TournamentEvent, urgent=False) -> tuple[discord.
         except Exception as ex:
             log.debug(f"Failed to download logo for {room_clean}: {ex}")
 
-    if os.path.exists(logo_path):
         file_attachment = discord.File(logo_path, filename=logo_filename)
         embed.set_thumbnail(url=f"attachment://{logo_filename}")
             
-    return embed, file_attachment
+    view = TournamentView(url=e.get('url'), password=e.get('password'))
+    return embed, file_attachment, view

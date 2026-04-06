@@ -37,5 +37,8 @@
     "💰 Botzilla in active mode",
     "🧨 10-minute alerts ready",
     "♠️ New freeroll approaching…"
-  ]
+  ],
+  "btn_link": "🔗 Open Link",
+  "btn_copy_pw": "📋 Copy Password",
+  "password_copied": "The password is: `{password}` (Long-press to copy on mobile)"
 }

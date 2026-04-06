@@ -37,5 +37,8 @@
     "💰 Botzilla aktív módban",
     "🧨 10 perces riasztók élesítve",
     "♠️ Új freeroll közeledik…"
-  ]
+  ],
+  "btn_link": "🔗 Megnyitás",
+  "btn_copy_pw": "📋 Jelszó másolása",
+  "password_copied": "A jelszó: `{password}` (Másoláshoz tartsd hosszan nyomva mobilon)"
 }

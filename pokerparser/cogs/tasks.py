@@ -90,8 +90,8 @@ class PokerTasks(commands.Cog):
                 await send_discord_message(channel, content=t("freerolls_next_24h"))
             
             for e in new_events:
-                emb, attach = await create_event_embed(e)
-                await send_discord_message(channel, embed=emb, file=attach)
+                emb, attach, view = await create_event_embed(e)
+                await send_discord_message(channel, embed=emb, file=attach, view=view)
                 await add_sent_event(e)
 
         # 2. Timed Alerts (1h and 10min)
@@ -110,12 +110,13 @@ class PokerTasks(commands.Cog):
                 event_key = (get_event_datetime(nxt), nxt["name"], 'warning')
                 if event_key not in self.sent_alerts:
                     self.sent_alerts.add(event_key)
-                    emb, attach = await create_event_embed(nxt)
+                    emb, attach, view = await create_event_embed(nxt)
                     await send_discord_message(
                         channel,
                         content=t("starts_in_minutes", min=total_minutes),
                         embed=emb,
-                        file=attach
+                        file=attach,
+                        view=view
                     )
 
             # Urgent alert
@@ -123,12 +124,13 @@ class PokerTasks(commands.Cog):
                 event_key = (get_event_datetime(nxt), nxt["name"], 'urgent')
                 if event_key not in self.sent_alerts:
                     self.sent_alerts.add(event_key)
-                    emb, attach = await create_event_embed(nxt, urgent=True)
+                    emb, attach, view = await create_event_embed(nxt, urgent=True)
                     await send_discord_message(
                         channel,
                         content=t("urgent_starts_in_minutes", min=total_minutes),
                         embed=emb,
-                        file=attach
+                        file=attach,
+                        view=view
                     )
 
         # Cleanup in-memory alerts (older than 2 hours)

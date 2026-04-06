@@ -14,3 +14,4 @@ class TournamentEvent(TypedDict):
     prize: str
     password: str
     source: str
+    url: Optional[str]

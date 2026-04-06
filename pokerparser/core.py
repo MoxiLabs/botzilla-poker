@@ -55,7 +55,7 @@ def t(key, **kwargs):
             return text
     return text
 
-async def send_discord_message(target, content: str = None, embed: discord.Embed = None, file: discord.File = None):
+async def send_discord_message(target, content: str = None, embed: discord.Embed = None, file: discord.File = None, view: discord.ui.View = None):
     """Send message to Discord or print to console based on DRY_RUN env variable"""
     dry_run = os.environ.get('DRY_RUN', '')
     
@@ -65,9 +65,11 @@ async def send_discord_message(target, content: str = None, embed: discord.Embed
             msg += f" [Embed: {embed.title}]"
         if file:
             msg += f" [File: {file.filename}]"
+        if view:
+            msg += f" [View: {view.__class__.__name__}]"
         log.info(msg)
     else:
         if file:
-            await target.send(content=content, embed=embed, file=file)
+            await target.send(content=content, embed=embed, file=file, view=view)
         else:
-            await target.send(content=content, embed=embed)
+            await target.send(content=content, embed=embed, view=view)

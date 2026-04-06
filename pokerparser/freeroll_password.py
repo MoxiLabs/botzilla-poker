@@ -74,6 +74,17 @@ class FreeRollPasswordParser:
                 password_span = excerpt.select_one(".expass2")
                 password = password_span.text.strip() if password_span else "n/a"
 
+                # Parse URL
+                item_link = item.select_one("a")
+                event_url = self.url
+                if item_link and item_link.get("href"):
+                    event_url = item_link.get("href")
+                    if event_url.startswith("/"):
+                        # Get base domain
+                        base_match = re.match(r'(https?://[^/]+)', self.url)
+                        base_url = base_match.group(1) if base_match else "https://www.freeroll-password.com"
+                        event_url = base_url + event_url
+
                 # Parse datetime with timezone conversion
                 if date_str:
                     # Parse date: "November 24, 2025"
@@ -122,7 +133,8 @@ class FreeRollPasswordParser:
                         "name": name,
                         "prize": prize,
                         "password": password,
-                        "source": "freeroll-password.com"
+                        "source": "freeroll-password.com",
+                        "url": event_url
                     })
             except Exception as e:
                 continue

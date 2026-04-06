@@ -163,6 +163,21 @@ class FreerollParser:
                     for svg in name_span.find_all('svg'):
                         svg.decompose()
                     tournament['tournament_name'] = name_span.text.strip()
+                    # Event URL can be found in <a> tags nearby or room link
+                    parent_a = name_span.find_parent('a')
+                    if parent_a and parent_a.get('href'):
+                        event_url = parent_a.get('href')
+                        if event_url.startswith('/'):
+                            event_url = self.url.rstrip('/') + event_url
+                        tournament['url'] = event_url
+                    elif title_room and title_room.find('a') and title_room.find('a').get('href'):
+                        # Fallback to room link
+                        rurl = title_room.find('a').get('href')
+                        if rurl.startswith('/'):
+                            rurl = self.url.rstrip('/') + rurl
+                        tournament['url'] = rurl
+                    else:
+                        tournament['url'] = self.url
                 
                 # Password
                 password_div = info_col.find('div', id=True)
@@ -254,7 +269,8 @@ class FreerollParser:
                     "name": tournament.get('tournament_name', 'Unknown'),
                     "prize": tournament.get('prize_pool', 'n/a'),
                     "password": password,
-                    "source": "freerollpass.com"
+                    "source": "freerollpass.com",
+                    "url": tournament.get('url', self.url)
                 })
             except Exception as e:
                 continue

@@ -41,8 +41,8 @@ class PokerCommands(commands.Cog):
             await send_discord_message(target, content=t("freerolls_next_24h"))
             
         for e in next_24h:
-            emb, attach = await create_event_embed(e)
-            await send_discord_message(target, embed=emb, file=attach)
+            emb, attach, view = await create_event_embed(e)
+            await send_discord_message(target, embed=emb, file=attach, view=view)
 
     @commands.command(name=f"next{config.get('command_suffix', '')}")
     async def cmd_next(self, ctx):
@@ -70,13 +70,13 @@ class PokerCommands(commands.Cog):
         total_minutes = int(delta.total_seconds() / 60)
         
         time_msg = t("starts_in_minutes", min=total_minutes)
-        emb, attach = await create_event_embed(nxt)
+        emb, attach, view = await create_event_embed(nxt)
         
         content = t("next_freeroll") + time_msg
         if isinstance(source, discord.Interaction):
-            await source.response.send_message(content=content, embed=emb, file=attach)
+            await source.response.send_message(content=content, embed=emb, file=attach, view=view)
         else:
-            await send_discord_message(target, content=content, embed=emb, file=attach)
+            await send_discord_message(target, content=content, embed=emb, file=attach, view=view)
 
     @commands.command(name=f"debug{config.get('command_suffix', '')}")
     async def cmd_debug(self, ctx):
