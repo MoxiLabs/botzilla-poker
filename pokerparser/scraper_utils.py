@@ -11,7 +11,8 @@ from .models import TournamentEvent
 from .freeroll_password import FreeRollPasswordParser
 from .freerollpass import FreerollParser
 from .logger import log
-from .core import config, t
+from .core import config, t, TIMEZONE
+
 
 # The global events variable
 GLOBAL_EVENTS: List[TournamentEvent] = []
@@ -74,8 +75,9 @@ async def create_event_embed(e: TournamentEvent, urgent=False) -> tuple[discord.
         time_display = t("fmt_all_day", date=e['date'].strftime('%d.%m.%Y'))
     else:
         dt = get_event_datetime(e)
-        dt_aware = dt.replace(tzinfo=ZoneInfo("Europe/Budapest"))
+        dt_aware = dt.replace(tzinfo=ZoneInfo(TIMEZONE))
         timestamp = int(dt_aware.timestamp())
+
         time_display = f"**{dt.strftime('%H:%M %d.%m.%Y')}** (<t:{timestamp}:R>)"
         
     prize_val = extract_prize_value(e['prize'])

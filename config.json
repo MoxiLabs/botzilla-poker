@@ -1,5 +1,7 @@
 {
+  "timezone": "Europe/Budapest",
   "channel_id": 1441900656377073904,
+
   "allowed_channel_ids": [
     1486515344674787399,
     1441900656377073904

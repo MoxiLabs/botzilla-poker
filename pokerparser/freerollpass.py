@@ -6,6 +6,8 @@ import aiohttp
 import asyncio
 from typing import List, Dict, Optional
 from .models import TournamentEvent
+from .core import TIMEZONE
+
 
 
 class FreerollParser:
@@ -25,7 +27,8 @@ class FreerollParser:
                 return await response.text()
     
     def _calculate_timezone_offset(self, html_content: str) -> int:
-        """Calculate timezone offset by comparing server time with current Budapest time"""
+        """Calculate timezone offset by comparing server time with current configured timezone time"""
+
         try:
             soup = BeautifulSoup(html_content, 'lxml')
             loader_time = soup.find('div', class_='loader-time')
@@ -54,14 +57,16 @@ class FreerollParser:
                 log.warning(f"Failed to calculate timezone offset: {e}")
                 return 1
             
-            # Get current Budapest time (handles CET/CEST automatically)
-            budapest_tz = ZoneInfo("Europe/Budapest")
+            # Get current configured timezone time (handles CET/CEST automatically)
+            budapest_tz = ZoneInfo(TIMEZONE)
             budapest_now = datetime.now(budapest_tz)
             budapest_offset = int(budapest_now.utcoffset().total_seconds() / 3600)
+
             budapest_now_naive = budapest_now.replace(tzinfo=None)
             
-            # Calculate the difference in hours between server time and Budapest time
+            # Calculate the difference in hours between server time and configured timezone time
             time_diff = server_dt - budapest_now_naive
+
             offset_diff = round(time_diff.total_seconds() / 3600)
             
             # The actual timezone offset is Budapest offset plus the difference
@@ -70,7 +75,8 @@ class FreerollParser:
             # Clamp to reasonable timezone range (-12 to +14)
             offset_hours = max(-12, min(14, offset_hours))
             
-            print(f"Detected timezone offset: GMT+{offset_hours} (server time: {server_dt_str}, Budapest time: {budapest_now.strftime('%d.%m.%Y %H:%M')})", flush=True)
+            print(f"Detected timezone offset: GMT+{offset_hours} (server time: {server_dt_str}, {TIMEZONE} time: {budapest_now.strftime('%d.%m.%Y %H:%M')})", flush=True)
+
             
             return offset_hours
             
@@ -231,8 +237,9 @@ class FreerollParser:
                 source_tz = ZoneInfo("Europe/London")
                 dt_aware = dt_naive.replace(tzinfo=source_tz)
                 
-                budapest_tz = ZoneInfo("Europe/Budapest")
+                budapest_tz = ZoneInfo(TIMEZONE)
                 dt_budapest = dt_aware.astimezone(budapest_tz)
+
 
                 # Get password
                 password = tournament.get('password', 'n/a')

@@ -8,6 +8,8 @@ from typing import List, Dict, Optional
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 from .models import TournamentEvent
+from .core import TIMEZONE
+
 
 class FreeRollPasswordParser:
     def __init__(self, url: str = "https://www.freeroll-password.com/"):
@@ -94,9 +96,10 @@ class FreeRollPasswordParser:
                             source_tz = timezone(timedelta(hours=tz_offset))
                             dt_aware = dt_naive.replace(tzinfo=source_tz)
                             
-                            # Convert to Budapest time (handles CET/CEST automatically)
-                            budapest_tz = ZoneInfo("Europe/Budapest")
+                            # Convert to configured timezone (handles CET/CEST automatically)
+                            budapest_tz = ZoneInfo(TIMEZONE)
                             dt_budapest = dt_aware.astimezone(budapest_tz)
+
                             
                             # Extract time from converted datetime
                             event_time = dt_budapest.time()

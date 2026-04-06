@@ -24,8 +24,10 @@ def load_config():
     sys.exit(1)
 
 config = load_config()
+TIMEZONE = config.get("timezone", "Europe/Budapest")
 
 LOCALE = config.get("locale", "hu")
+
 
 def load_translations(locale="hu"):
     paths = [

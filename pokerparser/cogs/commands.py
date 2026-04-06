@@ -60,7 +60,29 @@ class PokerCommands(commands.Cog):
 
     @commands.command(name=f"help{config.get('command_suffix', '')}")
     async def cmd_help(self, ctx):
-        await send_discord_message(ctx.channel, t("help_text"))
+        suffix = self.command_suffix
+        
+        embed = discord.Embed(
+            title=t("help_title"),
+            description=t("help_description"),
+            color=discord.Color.blue()
+        )
+        
+        commands_list = [
+            t("help_cmd_day", suffix=suffix),
+            t("help_cmd_next", suffix=suffix),
+            t("help_cmd_test", suffix=suffix),
+            t("help_cmd_help", suffix=suffix)
+        ]
+        
+        # We group commands under a 'Commands' header
+        # Note: 'help_field_commands' isn't in JSON yet, using hardcoded localized or generic header
+        embed.add_field(name="🛠️ Parancsok / Commands", value="\n".join(commands_list), inline=False)
+        embed.add_field(name=t("help_notif_title"), value=t("help_notif_desc"), inline=False)
+        embed.set_footer(text=t("help_footer"))
+        
+        await send_discord_message(ctx.channel, embed=embed)
+
 
 async def setup(bot):
     await bot.add_cog(PokerCommands(bot))
