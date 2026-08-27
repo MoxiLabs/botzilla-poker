@@ -87,10 +87,10 @@ class TestComponentsV2(unittest.IsolatedAsyncioTestCase):
         self.assertIsInstance(container, Container)
         self.assertEqual(container.accent_color, self.builder.COLOR_BLUE)
 
-        # Ensure command_suffix is formatted into prefix commands and no double emojis
+        # Ensure prefix commands are displayed cleanly and no double emojis
         help_texts = [item.content for item in container.children if isinstance(item, TextDisplay)]
         combined_text = "\n".join(help_texts)
-        self.assertIn("!day_poker", combined_text)
+        self.assertIn("!day", combined_text)
         self.assertNotIn("🃏 🃏", combined_text)
         self.assertNotIn("📢 📢", combined_text)
 

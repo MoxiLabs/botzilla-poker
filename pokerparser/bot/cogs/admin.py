@@ -32,11 +32,8 @@ class AdminCommands(commands.Cog):
         if spec == "global":
             synced = await self.bot.tree.sync()
             await ctx.send(self.t("cmd_sync_global_done", count=len(synced)))
-        elif spec == "copy":
-            self.bot.tree.copy_global_to(guild=ctx.guild)
-            synced = await self.bot.tree.sync(guild=ctx.guild)
-            await ctx.send(self.t("cmd_sync_copy_done", count=len(synced)))
         else:
+            self.bot.tree.copy_global_to(guild=ctx.guild)
             synced = await self.bot.tree.sync(guild=ctx.guild)
             await ctx.send(self.t("cmd_sync_done", count=len(synced)))
 
