@@ -26,20 +26,12 @@
 
   "new_daily_event": "🆕 **New daily event:**\n",
   "urgent_starts_in_minutes": "🚨 **ATTENTION! Starts in {min} minutes!**\n\n",
-  "fmt_high_value": "🏆 **[HIGH VALUE: {prize}]** 🚨\n",
-  "fmt_name": "💰 **{name}**\n",
-  "fmt_room": "🏢 Room: **{room}**\n",
-  "fmt_prize": "💵 Prize: **{prize}**\n",
-  "fmt_start": "🕒 Start: {time}\n",
-  "fmt_password": "🔑 Password: `{password}`\n",
-  "fmt_source": "{emoji} Source: {source}\n",
   "fmt_all_day": "**{date} (all day)**",
-  "embed_room": "🏢 Room",
-  "embed_prize": "💵 Prize",
-  "embed_start": "🕒 Start",
-  "embed_password": "🔑 Password",
-  "embed_source": "{emoji} Source",
-  "embed_source_short": "🌐 Source",
+  "label_room": "🏢 Room",
+  "label_prize": "💵 Prize",
+  "label_start": "🕒 Start",
+  "label_password": "🔑 Password",
+  "label_source": "🌐 Source",
   "status_messages": [
     "👹 Monitoring freerolls…",
     "🃏 Hunt is on…",
@@ -49,5 +41,10 @@
   ],
   "btn_link": "🔗 Open Link",
   "btn_copy_pw": "📋 Copy Password",
-  "password_copied": "The password is: `{password}` (Long-press to copy on mobile)"
+  "password_copied": "The password is: `{password}` (Long-press to copy on mobile)",
+  "no_permission": "🚫 Only the command author can navigate this paginator. Use `/day` to open your own view!",
+  "error_cooldown": "⏳ Please wait {retry_after}s before using this command again!",
+  "error_no_permission": "🚫 You do not have permission to run this command.",
+  "error_channel_restricted": "🚫 This command is not allowed in this channel.",
+  "error_generic": "❌ An unexpected error occurred while processing the command."
 }

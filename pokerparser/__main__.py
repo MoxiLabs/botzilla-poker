@@ -1,17 +1,11 @@
-"""Main entry point for the poker parser - runs the Discord bot"""
+"""Main entry point for running the pokerparser module (python -m pokerparser)."""
 
-import sys
-from .discordbot import bot, TOKEN, log
+from .bot.client import run_bot
 
 
 def main():
-    """Main function to start the Discord bot"""
-    try:
-        log.info("Starting Discord bot...")
-        bot.run(TOKEN)
-    except Exception as e:
-        log.error(f"Error starting bot: {e}")
-        sys.exit(1)
+    """Main execution function."""
+    run_bot()
 
 
 if __name__ == "__main__":

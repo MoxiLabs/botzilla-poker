@@ -26,20 +26,12 @@
 
   "new_daily_event": "🆕 **Új napi esemény:**\n",
   "urgent_starts_in_minutes": "🚨 **FIGYELEM! Kezdődik {min} perc múlva!**\n\n",
-  "fmt_high_value": "🏆 **[EXTRA NYEREMÉNY: {prize}]** 🚨\n",
-  "fmt_name": "💰 **{name}**\n",
-  "fmt_room": "🏢 Terem: **{room}**\n",
-  "fmt_prize": "💵 Nyeremény: **{prize}**\n",
-  "fmt_start": "🕒 Kezdés: {time}\n",
-  "fmt_password": "🔑 Jelszó: `{password}`\n",
-  "fmt_source": "{emoji} Forrás: {source}\n",
   "fmt_all_day": "**{date} (egész nap)**",
-  "embed_room": "🏢 Terem",
-  "embed_prize": "💵 Nyeremény",
-  "embed_start": "🕒 Kezdés",
-  "embed_password": "🔑 Jelszó",
-  "embed_source": "{emoji} Forrás",
-  "embed_source_short": "🌐 Forrás",
+  "label_room": "🏢 Terem",
+  "label_prize": "💵 Nyeremény",
+  "label_start": "🕒 Kezdés",
+  "label_password": "🔑 Jelszó",
+  "label_source": "🌐 Forrás",
   "status_messages": [
     "👹 Freerollok figyelése…",
     "🃏 Kezdődik a vadászat…",
@@ -49,5 +41,10 @@
   ],
   "btn_link": "🔗 Megnyitás",
   "btn_copy_pw": "📋 Jelszó másolása",
-  "password_copied": "A jelszó: `{password}` (Másoláshoz tartsd hosszan nyomva mobilon)"
+  "password_copied": "A jelszó: `{password}` (Másoláshoz tartsd hosszan nyomva mobilon)",
+  "no_permission": "🚫 Ezt a lapozót csak a parancsot kiadó felhasználó vezérelheti. Saját nézethez használd a `/day` parancsot!",
+  "error_cooldown": "⏳ Kérlek várj {retry_after} másodpercet a következő parancs előtt!",
+  "error_no_permission": "🚫 Nincs jogosultságod a parancs futtatásához.",
+  "error_channel_restricted": "🚫 Ez a parancs ebben a csatornában nem engedélyezett.",
+  "error_generic": "❌ Váratlan hiba történt a parancs feldolgozása közben."
 }
