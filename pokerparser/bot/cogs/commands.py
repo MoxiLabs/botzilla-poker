@@ -44,7 +44,7 @@ class PokerCommands(commands.Cog):
 
         if not upcoming:
             empty_view = self.bot.component_builder.build_info_layout(
-                "📭 " + self.t("no_freerolls_24h"),
+                self.t("no_freerolls_24h"),
                 "No tournaments match your criteria in the next 24 hours.",
                 color=self.bot.component_builder.COLOR_GRAY,
             )
@@ -71,7 +71,7 @@ class PokerCommands(commands.Cog):
         nxt = await self.bot.tournament_service.get_next_tournament()
         if not nxt:
             empty_view = self.bot.component_builder.build_info_layout(
-                "📭 " + self.t("no_upcoming_freeroll"),
+                self.t("no_upcoming_freeroll"),
                 "No upcoming freerolls found.",
                 color=self.bot.component_builder.COLOR_GRAY,
             )

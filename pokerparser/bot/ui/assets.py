@@ -30,12 +30,17 @@ class AssetManager:
         self._scan_existing_logos()
 
     def _scan_existing_logos(self):
-        """Pre-populate in-memory cache of existing logo files."""
+        """Pre-populate in-memory cache of existing logo files and ensure they are 1:1 squarified."""
         if os.path.exists(self.logos_dir):
             try:
-                self._known_logos.update(os.listdir(self.logos_dir))
-            except Exception:
-                pass
+                files = os.listdir(self.logos_dir)
+                for f in files:
+                    full_path = os.path.join(self.logos_dir, f)
+                    if os.path.isfile(full_path) and f.lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
+                        self.squarify_file(full_path)
+                self._known_logos.update(files)
+            except Exception as e:
+                log.debug(f"Failed to scan/squarify existing logos: {e}")
 
     @property
     def session(self) -> Optional[aiohttp.ClientSession]:
@@ -69,6 +74,7 @@ class AssetManager:
 
         exists = await asyncio.to_thread(os.path.exists, path)
         if exists:
+            await asyncio.to_thread(self.squarify_file, path)
             self._known_logos.add(filename)
             return path
 
@@ -105,8 +111,54 @@ class AssetManager:
 
         return None
 
-    @staticmethod
-    def _save_file(path: str, content: bytes):
-        """Thread-safe synchronous file writer."""
+    @classmethod
+    def squarify_file(cls, path: str):
+        """Ensures a local image file on disk is padded to 1:1 square with transparent background."""
+        try:
+            from PIL import Image
+            with Image.open(path) as img:
+                w, h = img.size
+                if w == h:
+                    return
+            with open(path, "rb") as f:
+                content = f.read()
+            processed = cls._squarify_image_bytes(content)
+            with open(path, "wb") as f:
+                f.write(processed)
+        except Exception as e:
+            log.debug(f"Failed to squarify existing logo file {path}: {e}")
+
+    @classmethod
+    def _save_file(cls, path: str, content: bytes):
+        """Thread-safe synchronous file writer with automatic 1:1 square canvas padding."""
+        processed = cls._squarify_image_bytes(content)
         with open(path, "wb") as f:
-            f.write(content)
+            f.write(processed)
+
+    @staticmethod
+    def _squarify_image_bytes(content: bytes, padding_ratio: float = 0.05) -> bytes:
+        """Pads rectangular images to 1:1 square canvas with transparent background so Discord thumbnail does not crop."""
+        try:
+            from PIL import Image
+            import io
+
+            with Image.open(io.BytesIO(content)) as img:
+                img = img.convert("RGBA")
+                w, h = img.size
+                if w == h and padding_ratio == 0:
+                    return content
+
+                max_side = max(w, h)
+                canvas_size = int(max_side * (1.0 + 2 * padding_ratio))
+                square_img = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
+
+                offset_x = (canvas_size - w) // 2
+                offset_y = (canvas_size - h) // 2
+                square_img.paste(img, (offset_x, offset_y), img)
+
+                out = io.BytesIO()
+                square_img.save(out, format="PNG")
+                return out.getvalue()
+        except Exception as e:
+            log.debug(f"Could not squarify image: {e}")
+            return content

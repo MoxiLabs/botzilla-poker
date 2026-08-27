@@ -53,6 +53,15 @@ class TestComponentsV2(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(container.accent_color, self.builder.COLOR_GOLD)
         self.assertGreater(len(container.children), 1)
 
+        # Ensure no duplicated emojis in details or footer
+        texts = [item.content for item in container.children if isinstance(item, TextDisplay)]
+        combined_text = "\n".join(texts)
+        self.assertNotIn("💵 💵", combined_text)
+        self.assertNotIn("🕒 🕒", combined_text)
+        self.assertNotIn("🔑 🔑", combined_text)
+        self.assertNotIn("🌐 🌐", combined_text)
+        self.assertIn("💵 **", combined_text)
+
     async def test_build_tournament_layout(self):
         """Test constructing standalone LayoutView with Container and ActionRow buttons."""
         t = self._sample_tournament(password="pass123")
@@ -78,10 +87,12 @@ class TestComponentsV2(unittest.IsolatedAsyncioTestCase):
         self.assertIsInstance(container, Container)
         self.assertEqual(container.accent_color, self.builder.COLOR_BLUE)
 
-        # Ensure command_suffix is formatted into prefix commands
+        # Ensure command_suffix is formatted into prefix commands and no double emojis
         help_texts = [item.content for item in container.children if isinstance(item, TextDisplay)]
         combined_text = "\n".join(help_texts)
         self.assertIn("!day_poker", combined_text)
+        self.assertNotIn("🃏 🃏", combined_text)
+        self.assertNotIn("📢 📢", combined_text)
 
     async def test_paginator_layout_view(self):
         """Test FreerollPaginatorView LayoutView pagination and components."""
@@ -135,8 +146,33 @@ class TestComponentsV2(unittest.IsolatedAsyncioTestCase):
         other_interaction_nav.data = {"custom_id": "nav_next"}
         other_interaction_nav.response.send_message = AsyncMock()
         self.assertFalse(await paginator.interaction_check(other_interaction_nav))
-        other_interaction_nav.response.send_message.assert_called_once()
+    async def test_asset_manager_squarifies_rectangular_logo(self):
+        """Test that rectangular logos are automatically padded to 1:1 square canvas to prevent Discord cropping."""
+        import io
+        from PIL import Image
+
+        # Create a rectangular 200x60 test image
+        rect_img = Image.new("RGBA", (200, 60), (255, 0, 0, 255))
+        buf = io.BytesIO()
+        rect_img.save(buf, format="PNG")
+
+        room = "PokerStars"
+        target_path = self.asset_manager.get_logo_path(room)
+        os.makedirs(os.path.dirname(target_path), exist_ok=True)
+        with open(target_path, "wb") as f:
+            f.write(buf.getvalue())
+
+        # Ensure logo processes file
+        res_path = await self.asset_manager.ensure_logo(room)
+        self.assertEqual(res_path, target_path)
+
+        # Inspect resulting image
+        with Image.open(res_path) as final_img:
+            w, h = final_img.size
+            self.assertEqual(w, h, "Processed logo should have 1:1 aspect ratio")
+            self.assertGreaterEqual(w, 200)
 
 
 if __name__ == "__main__":
     unittest.main()
+

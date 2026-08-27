@@ -90,7 +90,7 @@ class FreerollPaginatorView(LayoutView):
         if not tournament:
             empty_container = Container(accent_color=0x95A5A6)
             empty_container.add_item(
-                TextDisplay(f"### 📭 {self.i18n('no_upcoming_freeroll')}\nNo freerolls match the selected filter.")
+                TextDisplay(f"### {self.i18n('no_upcoming_freeroll')}\nNo freerolls match the selected filter.")
             )
             self.add_item(empty_container)
             return self, None
