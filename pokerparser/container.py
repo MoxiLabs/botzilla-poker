@@ -133,6 +133,11 @@ class AppContainer:
         # Global channel restriction check
         @bot.check
         async def channel_restriction_check(ctx) -> bool:
+            # Administrators and Admin maintenance commands bypass channel restrictions
+            if ctx.command and (ctx.command.cog_name == "AdminCommands" or ctx.command.name in ("sync", "clear_commands")):
+                return True
+            if ctx.author and getattr(getattr(ctx.author, "guild_permissions", None), "administrator", False):
+                return True
             if not self.settings.allowed_channel_ids:
                 return True
             return ctx.channel.id in self.settings.allowed_channel_ids
