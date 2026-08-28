@@ -86,6 +86,15 @@ class PokerBot(commands.Bot):
             except Exception as e:
                 log.error(f"Failed to load extension {ext}: {e}")
 
+    async def on_ready(self):
+        """Called when bot successfully logs into Discord."""
+        log.info(f"Botzilla online! Logged in as: {self.user} (ID: {self.user.id if self.user else 'unknown'})")
+        log.info(f"Connected guilds: {[g.name for g in self.guilds]}")
+
+    async def on_command(self, ctx: commands.Context):
+        """Logs every prefix command invocation."""
+        log.info(f"Command '{ctx.command}' invoked by {ctx.author} in #{ctx.channel} (Guild: {ctx.guild})")
+
     async def close(self):
         """Gracefully close bot connections, persistent database, and the shared aiohttp ClientSession."""
         if self.http_session and not self.http_session.closed:

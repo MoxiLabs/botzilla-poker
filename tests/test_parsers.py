@@ -96,6 +96,53 @@ class TestParsers(unittest.TestCase):
         self.assertEqual(t.source, "freerollpass.com")
         self.assertEqual(t.url, "https://freerollpass.com/freeroll/stars-weekly")
 
+    def test_freerollpass_stakepoker_password_badge_variations(self):
+        """Test parsing real-world password badge variations like stakepoker-319536 with cooler password."""
+        html = """
+        <ul id="freerollList">
+            <li class="row bg-list hot-bg">
+                <div class="col-4">
+                    <div class="f-size-30-576-40">20:00</div>
+                    <div class="f-size-15-576-20">28.08.2026</div>
+                    <div class="c-yellow">$250</div>
+                </div>
+                <div class="col-8">
+                    <div class="title-room"><a href="https://freerollpass.com/stakepoker">Stake Poker</a></div>
+                    <a href="https://freerollpass.com/stakepoker-319536"><span class="fl-text-name">PokerWired $250 GTD</span></a>
+                    <div class="pt-1" id="319536">
+                        <strong class="f-weight-500">Password</strong>:
+                        <strong class="f-weight-500 fl-badge bg-red" style="border-radius:5px">cooler</strong>
+                    </div>
+                </div>
+            </li>
+            <li class="row">
+                <div class="col-4">
+                    <div class="f-size-30-576-40">16:00</div>
+                    <div class="f-size-15-576-20">28.08.2026</div>
+                    <div class="c-yellow">$100</div>
+                </div>
+                <div class="col-8">
+                    <div class="title-room"><a href="https://freerollpass.com/888poker">888poker</a></div>
+                    <a href="https://freerollpass.com/888poker-320354"><span class="fl-text-name">Special Freeroll</span></a>
+                    <div class="pt-1" id="320354">
+                        <strong class="f-weight-500">Password</strong>: will be available at
+                        <span class="d-inline-block"><strong class="fl-badge bg-red">16:30</strong></span>
+                    </div>
+                </div>
+            </li>
+        </ul>
+        """
+        parser = FreerollPassParser(timezone="Europe/Budapest")
+        tournaments = parser.parse(html)
+        self.assertEqual(len(tournaments), 2)
+        # 1. Stake Poker should extract 'cooler'
+        self.assertEqual(tournaments[0].room.name, "Stake Poker")
+        self.assertEqual(tournaments[0].password, "cooler")
+        self.assertEqual(tournaments[0].has_password, True)
+
+        # 2. Upcoming countdown should be 'n/a'
+        self.assertEqual(tournaments[1].password, "n/a")
+
     def test_tournament_from_raw_and_pure_dataclass(self):
         """Test Tournament pure dataclass constructor and from_raw factory."""
         t1 = Tournament(

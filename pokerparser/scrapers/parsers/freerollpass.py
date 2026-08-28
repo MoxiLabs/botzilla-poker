@@ -1,5 +1,6 @@
 """Pure HTML parser for freerollpass.com."""
 
+import re
 from datetime import datetime
 from typing import List
 from zoneinfo import ZoneInfo
@@ -90,18 +91,32 @@ class FreerollPassParser(BaseHtmlParser):
                         href = title_room.find("a").get("href")
                         event_url = href if not href.startswith("/") else self.base_url.rstrip("/") + href
 
+                # Extract password robustly across all freerollpass.com variations
                 password = "not required"
-                password_div = info_col.find("div", id=True)
-                if password_div and "Password" in password_div.text:
-                    password_span = password_div.find("strong", class_="c-red-1")
-                    if password_span:
-                        password = password_span.text.strip()
+                password_div = info_col.find(lambda tag: tag.name == "div" and "Password" in tag.text)
+                if password_div:
+                    full_text = password_div.text.strip()
+                    if "will be available at" in full_text:
+                        password = "n/a"
+                    elif "not required" in full_text.lower() or "no password" in full_text.lower():
+                        password = "not required"
                     else:
-                        badge = password_div.find("span", class_="fl-badge")
-                        if badge and "not required" in badge.text:
-                            password = "not required"
+                        # Non-label candidate badges (e.g. <strong class="fl-badge bg-red">cooler</strong>)
+                        candidates = password_div.find_all(["strong", "span", "b"])
+                        pw_candidates = [
+                            c.text.strip()
+                            for c in candidates
+                            if "Password" not in c.text and c.text.strip()
+                        ]
+                        if pw_candidates:
+                            password = pw_candidates[-1]
                         else:
-                            password = "n/a"
+                            # Fallback regex parsing
+                            match = re.search(r"Password\s*:\s*([^\s\n\r]+)", full_text, re.IGNORECASE)
+                            if match:
+                                password = match.group(1).strip()
+                            else:
+                                password = "n/a"
 
                 # Parse DateTime (Source times are in UTC)
                 dt_str = f"{date_text} {time_text}"

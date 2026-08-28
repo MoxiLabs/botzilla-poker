@@ -19,23 +19,37 @@ class AdminCommands(commands.Cog):
         """Helper to translate using bot's injected i18n service."""
         return self.bot.i18n.translate(key, **kwargs)
 
-    @commands.command(name="sync")
+    @commands.command(name="sync", aliases=["sync_poker"])
     @commands.guild_only()
     @commands.has_permissions(administrator=True)
     async def sync_commands(self, ctx: commands.Context, spec: Optional[str] = None):
         """
         Refreshes/Syncs slash commands to Discord.
-        - !sync: Syncs to the current server (fast).
+        - !sync / !sync_poker: Syncs to this server AND globally.
         - !sync global: Syncs globally (slow, up to 1 hour).
-        - !sync copy: Copies global commands and syncs to this server.
         """
+        from ...utils.logger import log
+
+        global_cmds = self.bot.tree.get_commands()
+        log.info(f"Sync invoked by {ctx.author}. Tree has {len(global_cmds)} global commands: {[c.name for c in global_cmds]}")
+
         if spec == "global":
             synced = await self.bot.tree.sync()
+            log.info(f"Synced {len(synced)} global commands")
             await ctx.send(self.t("cmd_sync_global_done", count=len(synced)))
-        else:
-            self.bot.tree.copy_global_to(guild=ctx.guild)
-            synced = await self.bot.tree.sync(guild=ctx.guild)
-            await ctx.send(self.t("cmd_sync_done", count=len(synced)))
+            return
+
+        # 1. Copy to current guild and sync
+        self.bot.tree.copy_global_to(guild=ctx.guild)
+        synced_guild = await self.bot.tree.sync(guild=ctx.guild)
+        log.info(f"Synced {len(synced_guild)} guild commands to {ctx.guild.name} ({ctx.guild.id})")
+
+        # 2. Also sync globally as fallback
+        synced_global = await self.bot.tree.sync()
+        log.info(f"Also synced {len(synced_global)} global commands")
+
+        count = len(synced_guild) if len(synced_guild) > 0 else len(synced_global)
+        await ctx.send(self.t("cmd_sync_done", count=count))
 
     @commands.command(name="clear_commands")
     @commands.guild_only()
