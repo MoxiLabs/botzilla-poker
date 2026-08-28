@@ -19,7 +19,7 @@ class AdminCommands(commands.Cog):
         """Helper to translate using bot's injected i18n service."""
         return self.bot.i18n.translate(key, **kwargs)
 
-    @commands.command(name="sync", aliases=["sync_poker"])
+    @commands.command(name="sync")
     @commands.guild_only()
     @commands.has_permissions(administrator=True)
     async def sync_commands(self, ctx: commands.Context, spec: Optional[str] = None):
@@ -72,6 +72,10 @@ class AdminCommands(commands.Cog):
 async def setup(bot: "PokerBot"):
     cog = AdminCommands(bot)
     if bot.settings.command_suffix:
-        cog.sync_commands.aliases.append(f"sync{bot.settings.command_suffix}")
-        cog.clear_commands.aliases.append(f"clear_commands{bot.settings.command_suffix}")
+        alias_sync = f"sync{bot.settings.command_suffix}"
+        if alias_sync not in cog.sync_commands.aliases:
+            cog.sync_commands.aliases.append(alias_sync)
+        alias_clear = f"clear_commands{bot.settings.command_suffix}"
+        if alias_clear not in cog.clear_commands.aliases:
+            cog.clear_commands.aliases.append(alias_clear)
     await bot.add_cog(cog)
