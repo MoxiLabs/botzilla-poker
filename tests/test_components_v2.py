@@ -53,14 +53,14 @@ class TestComponentsV2(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(container.accent_color, self.builder.COLOR_GOLD)
         self.assertGreater(len(container.children), 1)
 
-        # Ensure no duplicated emojis in details or footer
+        # Ensure clean typography and no decorative emoji clutter in details or footer
         texts = [item.content for item in container.children if isinstance(item, TextDisplay)]
         combined_text = "\n".join(texts)
-        self.assertNotIn("💵 💵", combined_text)
-        self.assertNotIn("🕒 🕒", combined_text)
-        self.assertNotIn("🔑 🔑", combined_text)
-        self.assertNotIn("🌐 🌐", combined_text)
-        self.assertIn("💵 **", combined_text)
+        self.assertNotIn("💵", combined_text)
+        self.assertNotIn("🕒", combined_text)
+        self.assertNotIn("🔑", combined_text)
+        self.assertNotIn("🌐", combined_text)
+        self.assertIn(f"**{self.builder.i18n('label_prize')}:**", combined_text)
 
     async def test_build_tournament_layout(self):
         """Test constructing standalone LayoutView with Container and ActionRow buttons."""

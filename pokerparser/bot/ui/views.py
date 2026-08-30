@@ -59,7 +59,7 @@ class FreerollPaginatorView(LayoutView):
         distinct_rooms = sorted({tourney.room.name for tourney in self.all_tournaments})
         options = [
             discord.SelectOption(
-                label=f"🌐 All Rooms ({len(self.all_tournaments)})",
+                label=f"All Rooms ({len(self.all_tournaments)})",
                 value="all",
                 default=(self.selected_room == "all"),
             )
@@ -69,14 +69,14 @@ class FreerollPaginatorView(LayoutView):
             count = sum(1 for tourney in self.all_tournaments if tourney.room.name == room)
             options.append(
                 discord.SelectOption(
-                    label=f"🏢 {room} ({count})",
+                    label=f"{room} ({count})",
                     value=room,
                     default=(self.selected_room == room),
                 )
             )
 
         select_menu = Select(
-            placeholder="🔍 Filter by Poker Room...",
+            placeholder="Filter by Poker Room...",
             options=options,
         )
         select_menu.callback = self._on_select_room

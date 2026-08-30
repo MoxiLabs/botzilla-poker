@@ -96,7 +96,7 @@ class PokerCommands(commands.Cog):
         """Shows technical info about loaded freerolls."""
         events = await self.bot.tournament_service.get_all_tournaments(force_refresh=True)
         debug_view = self.bot.component_builder.build_info_layout(
-            "🔧 Debug Info",
+            "Debug Info",
             self.t("debug_freerolls_loaded", count=len(events)),
             color=self.bot.component_builder.COLOR_BLUE,
         )
@@ -107,7 +107,7 @@ class PokerCommands(commands.Cog):
     async def cmd_test(self, ctx: commands.Context):
         """Pings the bot to check if it is online."""
         test_view = self.bot.component_builder.build_info_layout(
-            "🧪 Healthcheck",
+            "Healthcheck",
             self.t("test_ok"),
             color=self.bot.component_builder.COLOR_NEPHRITE,
         )

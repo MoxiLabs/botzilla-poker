@@ -16,8 +16,8 @@ class TestI18n(unittest.TestCase):
 
     def test_translation_locales(self):
         """Test translating keys in Hungarian and English."""
-        self.assertEqual(self.i18n_hu.translate("test_ok"), "🧪 Teszt OK! A bot fut.")
-        self.assertEqual(self.i18n_en.translate("test_ok"), "🧪 Test OK! The bot is running.")
+        self.assertEqual(self.i18n_hu.translate("test_ok"), "Teszt OK! A bot fut.")
+        self.assertEqual(self.i18n_en.translate("test_ok"), "Test OK! The bot is running.")
 
     def test_translation_formatting_kwargs(self):
         """Test formatting placeholders in translations."""
@@ -32,10 +32,10 @@ class TestI18n(unittest.TestCase):
     def test_locale_switching(self):
         """Test dynamically switching active locale on I18nService."""
         service = I18nService(locale="hu")
-        self.assertEqual(service.translate("test_ok"), "🧪 Teszt OK! A bot fut.")
+        self.assertEqual(service.translate("test_ok"), "Teszt OK! A bot fut.")
 
         service.set_locale("en")
-        self.assertEqual(service.translate("test_ok"), "🧪 Test OK! The bot is running.")
+        self.assertEqual(service.translate("test_ok"), "Test OK! The bot is running.")
 
     def test_fallback_to_secondary_locale(self):
         """Test falling back to secondary locale when key is missing in custom dict."""

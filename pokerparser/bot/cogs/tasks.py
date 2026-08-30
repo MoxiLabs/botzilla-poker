@@ -26,11 +26,11 @@ class PokerTasks(commands.Cog):
         status_msgs = bot.i18n.translate("status_messages")
         if not isinstance(status_msgs, list):
             status_msgs = bot.settings.status_messages or [
-                "👹 Monitoring freerolls…",
-                "🃏 Hunt is on…",
-                "💰 Botzilla in active mode",
-                "🧨 10-minute alerts ready",
-                "♠️ New freeroll approaching…",
+                "Monitoring freerolls…",
+                "Hunt is on…",
+                "Botzilla in active mode",
+                "10-minute alerts ready",
+                "New freeroll approaching…",
             ]
         self.status_messages = cycle(status_msgs)
 

@@ -58,7 +58,7 @@ class TournamentComponentBuilder:
         logo_path = await self.asset_manager.ensure_logo(tournament.room)
         file_attachment = None
 
-        header_text = f"### 🏆 {tournament.name}\n🏢 **{tournament.room}**"
+        header_text = f"### {tournament.name}\n**{tournament.room}**"
 
         if logo_path and os.path.exists(logo_path):
             filename = os.path.basename(logo_path)
@@ -77,17 +77,17 @@ class TournamentComponentBuilder:
             timestamp = get_discord_timestamp(tournament.start_datetime, self.timezone)
             time_display = f"**{tournament.start_datetime.strftime('%H:%M %d.%m.%Y')}** (<t:{timestamp}:R>)"
 
-        password_text = f"`{tournament.password}`" if tournament.has_password else "❌"
+        password_text = f"`{tournament.password}`" if tournament.has_password else "—"
 
         details_md = (
-            f"💵 **{self.i18n('label_prize')}:** {tournament.prize}\n"
-            f"🕒 **{self.i18n('label_start')}:** {time_display}\n"
-            f"🔑 **{self.i18n('label_password')}:** {password_text}"
+            f"**{self.i18n('label_prize')}:** {tournament.prize}\n"
+            f"**{self.i18n('label_start')}:** {time_display}\n"
+            f"**{self.i18n('label_password')}:** {password_text}"
         )
         container.add_item(TextDisplay(details_md))
 
         # 3. Footer info (Source & Page info)
-        footer_parts = [f"🌐 {self.i18n('label_source')}: {tournament.source}"]
+        footer_parts = [f"{self.i18n('label_source')}: {tournament.source}"]
         if page_info:
             footer_parts.append(page_info)
         footer_parts.append(self.i18n("help_footer"))
@@ -148,17 +148,17 @@ class TournamentComponentBuilder:
         container = Container(accent_color=self.COLOR_BLUE)
 
         # Header
-        container.add_item(TextDisplay(f"### 🃏 {self.i18n('help_title')}\n{self.i18n('help_description')}"))
+        container.add_item(TextDisplay(f"### {self.i18n('help_title')}\n{self.i18n('help_description')}"))
         container.add_item(Separator(visible=True))
 
         # Slash Commands
         slash_list = [
-            f"🚀 `/day [room] [min_prize]` - {self.i18n('help_slash_day')}",
-            f"🎯 `/next` - {self.i18n('help_slash_next')}",
-            f"ℹ️ `/help` - {self.i18n('help_slash_help')}",
+            f"`/day` `[room]` `[min_prize]` — {self.i18n('help_slash_day')}",
+            f"`/next` — {self.i18n('help_slash_next')}",
+            f"`/help` — {self.i18n('help_slash_help')}",
         ]
         container.add_item(
-            TextDisplay(f"**✨ {self.i18n('help_header_slash')}**\n" + "\n".join(slash_list))
+            TextDisplay(f"**{self.i18n('help_header_slash')}**\n" + "\n".join(slash_list))
         )
         container.add_item(Separator(visible=True))
 
@@ -169,14 +169,14 @@ class TournamentComponentBuilder:
             self.i18n("help_cmd_help", suffix=self.command_suffix),
         ]
         container.add_item(
-            TextDisplay(f"**🛠️ {self.i18n('help_header_prefix')}**\n" + "\n".join(prefix_list))
+            TextDisplay(f"**{self.i18n('help_header_prefix')}**\n" + "\n".join(prefix_list))
         )
         container.add_item(Separator(visible=True))
 
         # Notifications & Footer
         container.add_item(
             TextDisplay(
-                f"📢 **{self.i18n('help_notif_title')}**\n{self.i18n('help_notif_desc')}\n\n-# Botzilla Poker • {self.i18n('help_footer')}"
+                f"**{self.i18n('help_notif_title')}**\n{self.i18n('help_notif_desc')}\n\n-# Botzilla Poker"
             )
         )
 
