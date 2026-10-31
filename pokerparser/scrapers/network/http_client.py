@@ -52,12 +52,30 @@ class HttpFetcher:
         self._session = session
 
     def get_random_headers(self, custom_headers: Optional[Dict[str, str]] = None) -> Dict[str, str]:
-        """Generates standard browser headers with rotated User-Agent."""
+        """Generates realistic standard browser headers with rotated User-Agent."""
+        ua = next(self._user_agents)
         headers = {
-            "User-Agent": next(self._user_agents),
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.5",
+            "User-Agent": ua,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9,hu;q=0.8",
+            "Sec-Ch-Ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": '"Windows"',
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "none",
+            "Sec-Fetch-User": "?1",
+            "Upgrade-Insecure-Requests": "1",
         }
+        if "Firefox" in ua:
+            headers.pop("Sec-Ch-Ua", None)
+            headers.pop("Sec-Ch-Ua-Mobile", None)
+            headers.pop("Sec-Ch-Ua-Platform", None)
+        elif "Macintosh" in ua:
+            headers["Sec-Ch-Ua-Platform"] = '"macOS"'
+        elif "Linux" in ua:
+            headers["Sec-Ch-Ua-Platform"] = '"Linux"'
+
         if custom_headers:
             headers.update(custom_headers)
         return headers
