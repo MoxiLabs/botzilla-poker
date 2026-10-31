@@ -6,10 +6,11 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     TZ=Europe/Budapest
 
-# Install system dependencies (certificates for HTTPS/WSS and timezone data)
+# Install system dependencies (certificates, timezone data, and gosu for user privilege switching)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     tzdata \
+    gosu \
     && rm -rf /var/lib/apt/lists/*
 
 # Create dedicated non-root user and group
@@ -28,13 +29,12 @@ COPY pokerparser/ ./pokerparser/
 COPY locales/ ./locales/
 COPY assets/ ./assets/
 COPY config.json run.py ./
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
-# Create directories for persistent storage and logs, then grant permissions
+# Create directories for persistent storage and logs, and set entrypoint permissions
 RUN mkdir -p /app/data /app/logs /app/assets/logos \
+    && chmod +x /usr/local/bin/docker-entrypoint.sh \
     && chown -R botzilla:botzilla /app
 
-# Switch to non-root user
-USER botzilla
-
-# Default command
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["python", "run.py"]
