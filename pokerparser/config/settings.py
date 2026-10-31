@@ -83,9 +83,11 @@ def get_settings() -> Settings:
         allowed_channels = [channel_id]
 
     log_dict = raw.get("logging", {})
+    log_file = os.environ.get("LOG_FILE") or log_dict.get("file", "botzilla.log")
+    log_level = os.environ.get("LOG_LEVEL") or log_dict.get("level", "INFO")
     logging_cfg = LoggingSettings(
-        level=log_dict.get("level", "INFO"),
-        file=log_dict.get("file", "botzilla.log"),
+        level=log_level,
+        file=log_file,
         max_mb=log_dict.get("max_mb", 5),
         backup_count=log_dict.get("backup_count", 3),
     )
@@ -97,7 +99,12 @@ def get_settings() -> Settings:
     )
 
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    db_file = os.path.join(base_dir, "botzilla.db")
+    db_file = (
+        os.environ.get("DB_FILE")
+        or os.environ.get("DB_PATH")
+        or raw.get("db_file")
+        or os.path.join(base_dir, "botzilla.db")
+    )
 
     return Settings(
         discord_token=token,

@@ -1,0 +1,73 @@
+# Git
+.git/
+.github/
+.gitignore
+
+# Python cache & build files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Testing & Coverage
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# IDE & Editor configs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.gemini/
+.agents/
+
+# Sensitive data, logs & local runtime files
+.env
+*.log
+logs/
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+data/
+botzilla.db
+botzilla.log
+
+# Dynamic asset downloads (mounted via volume)
+assets/logos/*
+!assets/logos/.gitkeep
+
+# Operating system files
+.DS_Store
+Thumbs.db

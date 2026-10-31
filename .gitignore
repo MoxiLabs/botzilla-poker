@@ -59,6 +59,9 @@ Thumbs.db
 
 # Project specific
 *.log
+logs/
 .env
 botzilla.db
-assets/logos/
+data/
+assets/logos/*
+!assets/logos/.gitkeep

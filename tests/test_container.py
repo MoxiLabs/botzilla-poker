@@ -79,6 +79,23 @@ class TestAppContainer(unittest.TestCase):
         self.assertIs(container.bot.event_bus, mock_bus)
         self.assertEqual(container.bot.i18n.locale, "hu")
 
+    def test_settings_env_overrides(self):
+        """Test DB_FILE, LOG_FILE, and LOG_LEVEL environment variable overrides."""
+        from pokerparser.config.settings import get_settings
+        import unittest.mock
+        with unittest.mock.patch.dict(
+            os.environ,
+            {
+                "DB_FILE": "/custom/path/custom.db",
+                "LOG_FILE": "/custom/path/custom.log",
+                "LOG_LEVEL": "DEBUG",
+            },
+        ):
+            st = get_settings()
+            self.assertEqual(st.db_file, "/custom/path/custom.db")
+            self.assertEqual(st.logging.file, "/custom/path/custom.log")
+            self.assertEqual(st.logging.level, "DEBUG")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -153,6 +153,53 @@ Alternatively, configure the bot directly inside `config.json`.
 
 ---
 
+## Docker Deployment (Recommended)
+
+Botzilla includes full Docker and Docker Compose support for easy deployment on Linux servers, VPS, or local Docker hosts.
+
+### 1. Setup Environment
+
+Copy `.env.example` to `.env` and set your token:
+
+```bash
+cp .env.example .env
+```
+
+Ensure `DISCORD_TOKEN` is set in `.env`:
+
+```env
+DISCORD_TOKEN=your_bot_token_here
+```
+
+### 2. Start Botzilla
+
+```bash
+docker compose up -d --build
+```
+
+### 3. Container Management
+
+- **View live logs**:
+  ```bash
+  docker compose logs -f
+  ```
+- **Restart container**:
+  ```bash
+  docker compose restart
+  ```
+- **Stop container**:
+  ```bash
+  docker compose down
+  ```
+
+### Persistent Volumes
+- `./data/` &rarr; Stores SQLite database (`botzilla.db`) across restarts.
+- `./logs/` &rarr; Stores rotating log files (`botzilla.log`).
+- `./assets/logos/` &rarr; Caches squarified poker room logos.
+- `./config.json` &rarr; Mounted read-only; modify config without rebuilding image.
+
+---
+
 ## Configuration Reference
 
 The `config.json` file controls all runtime parameters:

@@ -1,0 +1,27 @@
+services:
+  botzilla:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: botzilla
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - TZ=Europe/Budapest
+      - DB_FILE=/app/data/botzilla.db
+      - LOG_FILE=/app/logs/botzilla.log
+    volumes:
+      # Persistent SQLite database
+      - ./data:/app/data
+      # Persistent logs directory
+      - ./logs:/app/logs
+      # Mount configuration file (can be edited on host without rebuilding)
+      - ./config.json:/app/config.json:ro
+      # Persistent cache for downloaded poker room logos
+      - ./assets/logos:/app/assets/logos
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
